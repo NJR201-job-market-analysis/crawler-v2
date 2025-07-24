@@ -1,0 +1,31 @@
+sequenceDiagram
+    participant User
+    participant Program as 104 人力銀行 API
+    participant JobCatAPI as 104 搜尋類別
+    participant SearchAPI as 104 職缺列表
+    participant JobAPI as 104 職缺個別資訊
+    
+    Note over User: 設定爬蟲參數:<br/> 關鍵字、職業類別代碼
+
+    User->>Program: 執行爬蟲程式
+    Note over Program: def catch_104_url <br/> 建構搜尋 URL
+    Program->>JobCatAPI: 獲取關鍵字 / 職業類別資訊
+    JobCatAPI-->>Program: 返回 API 網址
+    
+
+    Note over Program: def fetch_jobs_url <br/> 獲取職缺列表
+    Program->>SearchAPI: 使用 API 獲取職缺列表
+    loop 每頁職缺 (最多 10 頁)
+        SearchAPI-->>Program: 收集職缺網址  <br/> 使用 SET () 篩選唯一值 <br/> 返回職缺連結
+        Note over Program: 儲存職缺 URL 
+    end
+
+    
+    Note over Program: def fetch_job_data  <br/> 獲取職缺詳細資訊
+    loop 連結每個職缺
+        Program->>JobAPI: 使用 API 網址取出 API 資料
+        JobAPI-->>Program: 返回職缺 JSON 資料
+        Note over Program: 儲存個別資料
+    end
+    
+    Program->>User: 轉換為 DataFrame 格式，輸出職缺資料

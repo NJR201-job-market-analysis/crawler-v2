@@ -1,0 +1,27 @@
+services:
+  cake_worker_1:  # 定義一個服務，名稱為 cake_worker_1
+    image: iyauta/cake-crawler:${DOCKER_IMAGE_VERSION}  # 使用的映像檔名稱與標籤（版本）
+    container_name: cake_worker_1
+    command: pipenv run celery -A crawler.cake_worker worker --loglevel=info --hostname=%h -Q cake_crawler
+    # 啟動容器後執行的命令，這裡是啟動 Celery worker，指定 app 為 crawler.worker，設定日誌等級為 info，
+    # 使用主機名稱當作 worker 名稱（%h），並將此 worker 加入名為 "cake_crawler" 的任務佇列 (queue)
+    restart: always  # 若容器停止或崩潰，自動重新啟動
+    environment:
+      - TZ=Asia/Taipei  # 設定時區為台北（UTC+8）
+    networks:
+      - cake_network  # 將此服務連接到 cake_network 網路
+    
+  cake_producer:  # 定義一個服務，名稱為 cake_producer
+    image: iyauta/cake-crawler:${DOCKER_IMAGE_VERSION}  # 使用的映像檔名稱與標籤（版本）
+    container_name: cake_producer
+    command: pipenv run python crawler/cake_producer.py
+    # restart: always  # 若容器停止或崩潰，自動重新啟動
+    environment:
+      - TZ=Asia/Taipei  # 設定時區為台北（UTC+8）
+    networks:
+      - cake_network  # 將此服務連接到 my_network 網路
+
+networks:
+  cake_network:
+    # 加入已經存在的網路
+    external: true
