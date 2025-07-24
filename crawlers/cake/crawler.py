@@ -1,8 +1,9 @@
 import urllib.request as req
-import pandas as pd
 from typing import cast, List
 from bs4 import BeautifulSoup, Tag
+
 from shared.logger import logger
+from shared.files import save_to_csv
 
 BASE_URL = "https://www.cake.me"
 HEADERS = {
@@ -196,9 +197,7 @@ def crawl_cake_jobs_by_category(category, job_type):
 
         page += 1
 
-    # save to csv
-    df = pd.json_normalize(result)
-    df.to_csv(f"cake_jobs_{category}_{job_type}.csv", encoding="utf-8")
+    save_to_csv(result, f"cake_jobs_{category}_{job_type}.csv")
 
     return result
 
