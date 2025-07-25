@@ -1,4 +1,4 @@
-from crawler import crawl_cake_jobs_by_category
+from .crawler import crawl_cake_jobs_by_category
 
 # https://www.cake.me/campaigns?locationId=1&page=1
 

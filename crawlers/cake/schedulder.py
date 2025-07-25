@@ -1,6 +1,6 @@
 from celery.schedules import crontab
-from worker import app
-from tasks import crawl_cake_jobs
+from .worker import app
+from .tasks import crawl_cake_jobs
 
 
 @app.on_after_configure.connect

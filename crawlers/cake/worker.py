@@ -1,6 +1,6 @@
 from celery import Celery
 
-from crawler.shared.config import (
+from shared.config import (
     RABBITMQ_HOST,
     RABBITMQ_PORT,
     WORKER_ACCOUNT,
@@ -11,7 +11,7 @@ app = Celery(
     "task",
     # 只包含 cake_tasks.py 裡面的程式, 才會成功執行
     include=[
-        "crawler.cake_tasks",
+        "crawlers.cake.tasks",
     ],
     # 連線到 rabbitmq,
     # pyamqp://user:password@127.0.0.1:5672/

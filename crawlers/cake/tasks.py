@@ -1,8 +1,8 @@
 from datetime import datetime
 from shared.logger import logger
 from shared.db import Database
-from worker import app
-from crawler import crawl_cake_jobs_by_category
+from .worker import app
+from .crawler import crawl_cake_jobs_by_category
 
 
 @app.task(bind=True)
