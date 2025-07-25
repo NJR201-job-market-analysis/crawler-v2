@@ -1,7 +1,7 @@
 from datetime import datetime
 from shared.logger import logger
 from shared.db import Database
-from .worker import app
+from crawlers.worker import app
 from .crawler import crawl_cake_jobs_by_category
 
 

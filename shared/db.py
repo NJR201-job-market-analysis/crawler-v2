@@ -14,13 +14,13 @@ from sqlalchemy import (
 from sqlalchemy.dialects.mysql import (
     insert,
 )  # 專用於 MySQL 的 insert 語法，可支援 on_duplicate_key_update
-from config import (
+from .config import (
     MYSQL_ACCOUNT,
     MYSQL_HOST,
     MYSQL_PASSWORD,
     MYSQL_PORT,
 )
-from logger import logger
+from .logger import logger
 
 
 class Database:

@@ -9,7 +9,7 @@ from shared.config import (
 
 app = Celery(
     "task",
-    # 只包含 cake_tasks.py 裡面的程式, 才會成功執行
+    # 只包含 tasks 裡面的程式, 才會成功執行
     include=[
         "crawlers.cake.tasks",
     ],

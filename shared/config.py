@@ -3,7 +3,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # 載入 .env 文件
-env_file = Path(__file__).parent / '../.env'
+env_file = Path(__file__).parent.parent / '.env'
 if env_file.exists():
     load_dotenv(env_file)
     print(f"✅ 載入 .env 文件: {env_file}")

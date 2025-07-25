@@ -1,0 +1,17 @@
+services:
+  jobmarket-worker-1:  # 定義一個服務
+    image: iyauta/jobmarket-crawler:${DOCKER_IMAGE_VERSION}  # 使用的映像檔名稱與標籤（版本）
+    container_name: jobmarket-worker-1
+    command: pipenv run celery -A crawlers.worker worker --loglevel=info --hostname=%h -Q jobmarket-worker-1
+    # 啟動容器後執行的命令，這裡是啟動 Celery worker，指定 app 為 crawler.worker，設定日誌等級為 info，
+    # 使用主機名稱當作 worker 名稱（%h），並將此 worker 加入名為 "crawler.worker" 的任務佇列 (queue)
+    restart: always  # 若容器停止或崩潰，自動重新啟動
+    environment:
+      - TZ=Asia/Taipei  # 設定時區為台北（UTC+8）
+    networks:
+      - jobmarket-network  # 將此服務連接到 jobmarket-network 網路
+
+networks:
+  jobmarket-network:
+    # 加入已經存在的網路
+    external: true
