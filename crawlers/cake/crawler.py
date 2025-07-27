@@ -109,7 +109,7 @@ def crawl_cake_jobs_by_category(category, job_type):
 
     logger.info("🐛 開始爬取 | %s | %s", category, job_type)
 
-    while page <= 1:
+    while True:
         # if job_type is None then https://www.cake.me/campaigns/software-developer/jobs?page=1
         # if job_type is it_front-end-engineer then
         # https://www.cake.me/campaigns/software-developer/jobs?page=1&profession[0]=it_front-end-engineer

@@ -56,7 +56,7 @@ class Database:
         try:
             # 定義結構
             self.jobs_table = Table(
-                "cake_jobs",
+                "jobs",
                 self.metadata,
                 Column("id", BigInteger, primary_key=True, autoincrement=True),
                 Column("job_title", String(200), nullable=False),
@@ -79,9 +79,9 @@ class Database:
 
             # 创建表（如果不存在）
             self.metadata.create_all(self.engine)
-            # logger.info("✅ Cake 資料表建立/檢查完成")
+            # logger.info("✅ 資料表建立/檢查完成")
         except Exception as e:
-            logger.error("❌ 建立 Cake 資料表失敗: %s", e)
+            logger.error("❌ 建立資料表失敗: %s", e)
 
     def insert_jobs(self, jobs):
         if self.engine is None:
@@ -137,7 +137,7 @@ class Database:
                 logger.error("   job_url: %s", row.get("job_url", "Unknown"))
                 continue
 
-        logger.info("✅ 寫入 Cake 資料庫完成:")
+        logger.info("✅ 寫入資料庫完成:")
         logger.info("   總計: %s 筆", len(df))
         logger.info("   成功: %s 筆", success_count)
         logger.info("   新增: %s 筆", insert_count)
