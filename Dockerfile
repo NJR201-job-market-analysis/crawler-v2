@@ -19,7 +19,7 @@ COPY ./setup.py /crawler
 COPY ./genenv.py /crawler
 COPY ./Pipfile /crawler
 COPY ./Pipfile.lock /crawler
-COPY ./README /crawler
+COPY ./README.md /crawler
 COPY ./local.ini /crawler
 
 # 設定容器的工作目錄為 /crawler，後續的指令都在這個目錄下執行
