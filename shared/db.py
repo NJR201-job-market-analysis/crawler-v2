@@ -77,7 +77,7 @@ class Database:
                 ),
             )
 
-            # 创建表（如果不存在）
+            # 創建表（如果不存在）
             self.metadata.create_all(self.engine)
             # logger.info("✅ 資料表建立/檢查完成")
         except Exception as e:
