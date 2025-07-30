@@ -19,6 +19,7 @@ from .config import (
     MYSQL_HOST,
     MYSQL_PASSWORD,
     MYSQL_PORT,
+    MYSQL_DATABASE,
 )
 from .logger import logger
 
@@ -38,7 +39,7 @@ class Database:
             # 定義資料庫連線字串（MySQL 資料庫）
             # 格式：mysql+pymysql://使用者:密碼@主機:port/資料庫名稱
             # 上傳到 user 這個 db, 同學可切換成自己的 database
-            address = f"mysql+pymysql://{MYSQL_ACCOUNT}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/user"
+            address = f"mysql+pymysql://{MYSQL_ACCOUNT}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
             engine = create_engine(address)
 
             # 測試連接
