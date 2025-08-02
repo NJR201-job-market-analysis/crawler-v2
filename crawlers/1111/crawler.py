@@ -185,7 +185,7 @@ def crawl_1111_jobs_by_category(category_id):
 
     logger.info("🐛 開始爬取 1111 職缺 | %s | %s", category_id, category_name)
 
-    while page < 2:
+    while True:
         json = fetch_job_list(category_id, page)
         if json is None:
             logger.info("請求 category:%s, page:%s 失敗", category_name, page)
