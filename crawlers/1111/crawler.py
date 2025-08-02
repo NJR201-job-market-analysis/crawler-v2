@@ -4,7 +4,7 @@ import urllib
 import ssl
 import json
 from shared.logger import logger
-from shared.files import save_to_csv
+# from shared.files import save_to_csv
 from .constants import JOB_CATEGORIES
 from ..constants import COMMON_SKILLS
 
@@ -220,7 +220,7 @@ def crawl_1111_jobs_by_category(category_id):
 
         page += 1
 
-    save_to_csv(result, f"1111_jobs_{category_name}")
+    # save_to_csv(result, f"1111_jobs_{category_name}")
 
     return result
 

@@ -107,7 +107,7 @@ def crawl_cake_jobs_by_category(category, job_type):
 
         page += 1
 
-    save_to_csv(result, f"cake_jobs_{category}_{job_type}")
+    # save_to_csv(result, f"cake_jobs_{category}_{job_type}")
 
     return result
 

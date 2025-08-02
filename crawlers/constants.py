@@ -72,7 +72,6 @@ COMMON_SKILLS = [
     "GraphQL",
     "Graphql",
     "RESTful",
-    "Restful",
     "gRPC",
     "Pubsub",
     "Message Queue",
