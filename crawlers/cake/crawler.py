@@ -4,103 +4,12 @@ from bs4 import BeautifulSoup, Tag
 
 from shared.logger import logger
 from shared.files import save_to_csv
+from ..constants import COMMON_SKILLS
 
 BASE_URL = "https://www.cake.me"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"
 }
-
-COMMON_SKILLS = [
-    # 主流語言/框架
-    "JavaScript",
-    "Javascript",
-    "Typescript",
-    "TypeScript",
-    "Node.js",
-    "NodeJs",
-    "Node",
-    "Python",
-    "Java",
-    "Go",
-    "Golang",
-    "Flutter",
-    "C#",
-    "C++",
-    "C",
-    "PHP",
-    "Ruby",
-    "Swift",
-    "Kotlin",
-    "Scala",
-    "Perl",
-    "Rust",
-    "Objective-C",
-    ".NET",
-    # 資料庫
-    "SQL",
-    "MySQL",
-    "PostgreSQL",
-    "MSSQL",
-    "Oracle",
-    "MongoDB",
-    "Redis",
-    "ElasticSearch",
-    "SQLite",
-    # 前端
-    "HTML5",
-    "CSS3",
-    "HTML",
-    "CSS",
-    "Sass",
-    "Less",
-    "React",
-    "React Native",
-    "React.js" "ReactJs",
-    "Redux",
-    "Nextjs",
-    "NextJs",
-    "Vue",
-    "Vue.js",
-    "Angular",
-    # DevOps/雲端
-    "Shell Script",
-    "Bash",
-    "Linux",
-    "Unix",
-    "AWS",
-    "GCP",
-    "Azure",
-    "Google Cloud",
-    "Amazon Web Services",
-    "Microsoft Azure",
-    "Docker",
-    "Kubernetes",
-    "K8s",
-    "Git",
-    "GitHub",
-    "GitLab",
-    "CI/CD",
-    "Jenkins",
-    "GitHub Actions",
-    "GitLab CI",
-    # API/通訊
-    "GraphQL",
-    "Graphql",
-    "RESTful",
-    "Restful",
-    "gRPC",
-    "Pubsub",
-    "Message Queue",
-    "RabbitMQ",
-    "Kafka",
-    "Nginx",
-    "Apache",
-    # 其他
-    "Agile",
-    "Scrum",
-    "Kanban",
-    # ...可再擴充...
-]
 
 
 def crawl_cake_jobs_by_category(category, job_type):
@@ -121,7 +30,7 @@ def crawl_cake_jobs_by_category(category, job_type):
             else base_url
         )
 
-        print("頁面:", url)
+        # print("頁面:", url)
 
         r = req.Request(url)
         r.add_header(
@@ -197,7 +106,7 @@ def crawl_cake_jobs_by_category(category, job_type):
 
         page += 1
 
-    save_to_csv(result, f"cake_jobs_{category}_{job_type}.csv")
+    save_to_csv(result, f"cake_jobs_{category}_{job_type}")
 
     return result
 

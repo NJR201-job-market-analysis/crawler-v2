@@ -13,6 +13,7 @@ bs4 = "*"
 sqlalchemy = "==1.4.54"
 pymysql = "==1.1.1"
 crawler = {editable = true, path = "."}
+tqdm = "*"
 
 [dev-packages]
 

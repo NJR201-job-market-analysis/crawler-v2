@@ -14,7 +14,7 @@ categories = [
     # 可以繼續添加更多分類
 ]
 
-logger.info("🚀 開始發送 %s 個爬蟲任務", len(categories))
+logger.info("🚀 開始發送 %s 個 Cake 爬蟲任務", len(categories))
 
 tasks = []
 
@@ -25,6 +25,6 @@ for category, job_type in categories:
     task.apply_async(queue="crawler-queue")
 
     tasks.append(task)
-    logger.info("📤 已發送任務: %s | %s | ID: %s", category, job_type, task.id)
+    logger.info("📤 已發送 Cake 爬蟲任務: %s | %s | ID: %s", category, job_type, task.id)
 
-logger.info("✅ 所有任務已發送完成，共 %s 個任務", len(tasks))
+logger.info("✅ 所有 Cake 爬蟲任務已發送完成，共 %s 個任務", len(tasks))

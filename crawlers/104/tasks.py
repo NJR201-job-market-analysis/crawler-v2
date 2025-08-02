@@ -2,22 +2,24 @@ from datetime import datetime
 from shared.logger import logger
 from shared.db import Database
 from crawlers.worker import app
-from .crawler import crawl_cake_jobs_by_category
+from .crawler import crawl_104_jobs_by_category
+from .category_dict import CATEGORIES_DICT
 
 
 @app.task(bind=True)
-def crawl_cake_jobs(self, category, job_type):
+def crawl_104_jobs(self, category_id):
 
     task_id = self.request.id
     start_time = datetime.now()
 
+    category_name = CATEGORIES_DICT[category_id]
+
     try:
-        result = crawl_cake_jobs_by_category(category, job_type)
+        result = crawl_104_jobs_by_category(category_id)
 
         logger.info(
-            "🗄️  寫入資料庫 | 📂 %s | 🏷️  %s | 📊 %s 筆",
-            category,
-            job_type,
+            "🗄️  寫入資料庫 | 📂 %s | 📊 %s 筆",
+            category_name,
             len(result),
         )
         Database().insert_jobs(result)
@@ -25,19 +27,18 @@ def crawl_cake_jobs(self, category, job_type):
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
 
-        logger.info("✅ Cake 爬蟲任務完成 %s | 耗時: %.2f秒", task_id, duration)
+        logger.info("✅ 104 爬蟲任務完成 %s | 耗時: %.2f秒", task_id, duration)
 
         return {
             "status": "success",
             "task_id": task_id,
-            "category": category,
-            "job_type": job_type,
+            "category": category_name,
             "duration": duration,
             "result_count": len(result),
             "timestamp": end_time.isoformat(),
         }
     except Exception as e:
-        logger.error("❌ Cake 爬蟲任務失敗 %s | 錯誤: %s", task_id, str(e))
+        logger.error("❌ 104 爬蟲任務失敗 %s | 錯誤: %s", task_id, str(e))
 
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
@@ -46,16 +47,7 @@ def crawl_cake_jobs(self, category, job_type):
             "status": "error",
             "task_id": task_id,
             "error": str(e),
-            "category": category,
-            "job_type": job_type,
+            "category": category_name,
             "duration": duration,
             "timestamp": end_time.isoformat(),
         }
-
-
-@app.task
-def test_task():
-    """
-    Simple test task
-    """
-    return "Hello from Cake worker!"
