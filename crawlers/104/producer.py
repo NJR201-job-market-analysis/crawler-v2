@@ -1,8 +1,8 @@
 from shared.logger import logger
 from .tasks import crawl_104_jobs
-from .constants import CATEGORIES_DICT
+from .constants import JOB_CATEGORIES
 
-# 定義要爬取的分類和職位類型
+# 定義要爬取的分類
 categories = [
     # 軟體工程類人員
     "2007001000",
@@ -15,7 +15,7 @@ tasks = []
 
 # 為每個分類創建一個任務
 for category_id in categories:
-    category_name = CATEGORIES_DICT[category_id]
+    category_name = JOB_CATEGORIES[category_id]
 
     task = crawl_104_jobs.s(category_id=category_id)
     task.apply_async(queue="crawler-queue")

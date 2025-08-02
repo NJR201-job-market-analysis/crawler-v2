@@ -6,7 +6,7 @@ import json
 from shared.logger import logger
 
 from shared.files import save_to_csv
-from .constants import CATEGORIES_DICT
+from .constants import JOB_CATEGORIES
 from ..constants import COMMON_SKILLS
 
 # https://www.104.com.tw/jobs/search/api/jobs?jobcat=2007000000&jobsource=index_s&mode=s&page=1&pagesize=20
@@ -29,7 +29,7 @@ def crawl_104_jobs_by_category(category_id):
     result = []
     page = 1
 
-    category_name = CATEGORIES_DICT[category_id]
+    category_name = JOB_CATEGORIES[category_id]
 
     logger.info("🐛 開始爬取 104 職缺 | %s | %s", category_id, category_name)
 
