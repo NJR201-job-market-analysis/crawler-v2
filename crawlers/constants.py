@@ -1,9 +1,7 @@
 COMMON_SKILLS = [
     # 主流語言/框架
     "JavaScript",
-    "Javascript",
     "Typescript",
-    "TypeScript",
     "Node.js",
     "NodeJs",
     "Node",
@@ -46,7 +44,6 @@ COMMON_SKILLS = [
     "React.js" "ReactJs",
     "Redux",
     "Nextjs",
-    "NextJs",
     "Vue",
     "Vue.js",
     "Angular",
