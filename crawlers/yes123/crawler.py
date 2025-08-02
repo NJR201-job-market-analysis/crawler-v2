@@ -166,6 +166,7 @@ def crawl_a_job(job_link):
     }
 
     job_dict = {}
+    job_dict["job_url"] = job_link
 
     # 初始化空值
     for key, value in map_dict.items():
@@ -217,7 +218,8 @@ def crawl_a_page(html):
             "salary": salary_text,
             "company_name": company_text,
             "location": location_text,
-            "tags": tags
+            "tags": tags,
+            "platform": "yes123"
         }
         
         # cmd動態進度條，每爬完一個職缺就會加一
@@ -269,7 +271,7 @@ def data_to_json(data, json_filepath):
     """
     with open(json_filepath, 'w', encoding='utf-8') as f:
         # endure-ascii 會把所有東西轉成英文
-        json.dump(job_list, f, ensure_ascii=False, indent=4)
+        json.dump(data, f, ensure_ascii=False, indent=4)
         print(f"Successfully saved to '{json_filepath}'")
 
 def data_to_csv(data, csv_filepath):
@@ -278,7 +280,7 @@ def data_to_csv(data, csv_filepath):
     """
     fieldnames = data[0].keys() # Assumes all dictionaries have the same keys
 
-    with open(csv_filepath, 'w', newline='') as csv_file:
+    with open(csv_filepath, 'w', newline='', encoding='utf-8') as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data)
