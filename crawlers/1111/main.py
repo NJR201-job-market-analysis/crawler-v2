@@ -1,4 +1,12 @@
 import 新專題main as main
+from .crawler import crawl_1111_jobs_by_category
+
+# https://www.cake.me/campaigns?locationId=1&page=1
+
+# 測試用
+result = crawl_1111_jobs_by_category(category_id="140213")
+print(result)
+exit()
 
 #(一)查找資料條件, 我們希望獲得以下資訊(職缺): 
 #"公司名稱", "工作內容(職缺描述)", "電腦專長", "工作地點", "工作經驗", 
