@@ -12,6 +12,7 @@ app = Celery(
     # 只包含 tasks 裡面的程式, 才會成功執行
     include=[
         "crawlers.cake.tasks",
+        "crawlers.104.tasks",
     ],
     # 連線到 rabbitmq,
     # pyamqp://user:password@127.0.0.1:5672/

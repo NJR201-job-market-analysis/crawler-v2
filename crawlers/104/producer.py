@@ -6,8 +6,6 @@ from .category_dict import CATEGORIES_DICT
 categories = [
     # 軟體工程類人員
     "2007001000",
-    # 前端工程師
-    "2007001015",
     # 可以繼續添加更多分類
 ]
 
@@ -16,10 +14,10 @@ logger.info("🚀 開始發送 %s 個 104 爬蟲任務", len(categories))
 tasks = []
 
 # 為每個分類創建一個任務
-for category, job_type in categories:
-    category_name = CATEGORIES_DICT[category]
+for category_id in categories:
+    category_name = CATEGORIES_DICT[category_id]
 
-    task = crawl_104_jobs.s(category_id=category)
+    task = crawl_104_jobs.s(category_id=category_id)
     task.apply_async(queue="crawler-queue")
 
     tasks.append(task)

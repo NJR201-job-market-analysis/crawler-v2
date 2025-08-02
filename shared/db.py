@@ -72,6 +72,7 @@ class Database:
                 Column("job_url", String(500), nullable=False, unique=True),
                 Column("category", String(100)),
                 Column("job_type", String(100)),
+                Column("platform", String(100)),
                 Column("created_at", DateTime, default=datetime.now),
                 Column(
                     "updated_at", DateTime, default=datetime.now, onupdate=datetime.now

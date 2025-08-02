@@ -33,11 +33,10 @@ def crawl_104_jobs_by_category(category_id):
 
     logger.info("🐛 開始爬取 104 職缺 | %s", category_name)
 
-    while page < 2:
-
+    while True:
         json = fetch_job_list(category_id, page)
         if json is None:
-            logger.info("請求 category:%s, page:%s 失敗", category_id, page)
+            logger.info("請求 category:%s, page:%s 失敗", category_name, page)
             break
 
         last_page = json["metadata"]["pagination"]["lastPage"]
@@ -98,12 +97,14 @@ def safe_parse_json(res):
         logger.error("解析 JSON 失敗 | %s", e)
         return None
 
+
 def extract_skills(job_description):
     found_skills = set()
     for skill in COMMON_SKILLS:
         if skill.lower() in job_description.lower():
             found_skills.add(skill)
     return ",".join(sorted(found_skills)) if found_skills else ""
+
 
 def fetch_job_list(category_id, page):
     try:
