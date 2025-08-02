@@ -1,6 +1,6 @@
 from shared.logger import logger
 from .tasks import crawl_104_jobs
-from .category_dict import CATEGORIES_DICT
+from .constants import CATEGORIES_DICT
 
 # 定義要爬取的分類和職位類型
 categories = [

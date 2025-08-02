@@ -3,7 +3,6 @@ from shared.logger import logger
 from shared.db import Database
 from crawlers.worker import app
 from .crawler import crawl_104_jobs_by_category
-from .category_dict import CATEGORIES_DICT
 
 
 @app.task(bind=True)
@@ -12,14 +11,12 @@ def crawl_104_jobs(self, category_id):
     task_id = self.request.id
     start_time = datetime.now()
 
-    category_name = CATEGORIES_DICT[category_id]
-
     try:
         result = crawl_104_jobs_by_category(category_id)
 
         logger.info(
             "🗄️  寫入資料庫 | 📂 %s | 📊 %s 筆",
-            category_name,
+            category_id,
             len(result),
         )
         Database().insert_jobs(result)
@@ -32,7 +29,7 @@ def crawl_104_jobs(self, category_id):
         return {
             "status": "success",
             "task_id": task_id,
-            "category": category_name,
+            "category_id": category_id,
             "duration": duration,
             "result_count": len(result),
             "timestamp": end_time.isoformat(),
@@ -47,7 +44,7 @@ def crawl_104_jobs(self, category_id):
             "status": "error",
             "task_id": task_id,
             "error": str(e),
-            "category": category_name,
+            "category_id": category_id,
             "duration": duration,
             "timestamp": end_time.isoformat(),
         }

@@ -101,6 +101,7 @@ def crawl_cake_jobs_by_category(category, job_type):
                 "job_url": job_url,
                 "job_type": job_type,
                 "category": category,
+                "platform": "Cake",
             }
             result.append(data)
 
