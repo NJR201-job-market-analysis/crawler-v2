@@ -1,9 +1,7 @@
 import urllib.request as req
 from typing import cast, List
 from bs4 import BeautifulSoup, Tag
-
 from shared.logger import logger
-# from shared.files import save_to_csv
 from ..constants import COMMON_SKILLS
 
 BASE_URL = "https://www.cake.me"
@@ -18,7 +16,7 @@ def crawl_cake_jobs_by_category(category):
     category_id = category["id"]
     category_name = category["name"]
 
-    logger.info("🐛 開始爬取 Cake %s 職缺", category_name)
+    logger.info("🐛 開始爬取 Cake 職缺 | %s", category_name)
 
     while True:
         # if job_type is None then https://www.cake.me/campaigns/software-developer/jobs?page=1
@@ -27,8 +25,6 @@ def crawl_cake_jobs_by_category(category):
 
         base_url = f"{BASE_URL}/jobs/categories/it/{category_id}?page={page}"
         url = base_url
-
-        # print("頁面:", url)
 
         r = req.Request(url)
         r.add_header(
@@ -47,17 +43,13 @@ def crawl_cake_jobs_by_category(category):
         # 型別很嚴格，要先轉型不然 IDE 會報錯
         jobs = cast(
             List[Tag],
-            soup.find_all("div", {"class": "CampaignJobSearchItem_wrapper__HsxKW"}),
+            soup.find_all("div", {"class": "JobSearchItem_wrapper__bb_vR"}),
         )
 
         for job in jobs:
-            job_title = cast(
-                Tag, job.select_one("a.CampaignJobSearchItem_jobTitle__LQGW_")
-            )
+            job_title = cast(Tag, job.select_one("a.JobSearchItem_jobTitle__bu6yO"))
 
-            company_name = _safe_get_text(
-                job, "a.CampaignJobSearchItem_companyName__i9OXl"
-            )
+            company_name = _safe_get_text(job, "a.JobSearchItem_companyName__bY7JI")
 
             logger.info("🔍 [Cake] | %s | %s", company_name, job_title.text)
 
@@ -76,7 +68,7 @@ def crawl_cake_jobs_by_category(category):
             # 2. 100000-150000
             # 3. 1-3年
             job_features = job.select(
-                "div.CampaignJobSearchItem_features__H3moX .InlineMessage_inlineMessage____Ulc"
+                "div.JobSearchItem_features__hR3pk .InlineMessage_inlineMessage____Ulc"
             )
 
             # 工作類型 (全職、兼職、實習)
@@ -106,8 +98,6 @@ def crawl_cake_jobs_by_category(category):
             result.append(data)
 
         page += 1
-
-    # save_to_csv(result, f"cake_jobs_{category}_{job_type}")
 
     return result
 
@@ -212,4 +202,3 @@ def _safe_get_job_experience(job_features):
                 return feature.select_one("div.InlineMessage_label__LJGjW").text
     except (IndexError, AttributeError):
         return ""
-

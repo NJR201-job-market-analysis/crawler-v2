@@ -56,26 +56,27 @@ def analaze_pages(url):
     # (不用"端"是因為會撈出前端後端)(應該有更好的解法, 待我再研究XD)
     contents = html.find_all("div", {"class": "content"})
 
-    keywords = {
-        "遠",
-    }
-    work_type = set()
-    for w in contents:
-        if w.h3 != None:
-            for keyword in w.h3.text:
-                if keyword in keywords:
-                    work_type.add(w.h3.text)
-        if w.p != None:
-            for keyword in w.p.text:
-                if keyword in keywords:
-                    work_type.add(w.p.text)
-    if work_type == set():  # QQ共用的太多了, 一直重複查找, 先用set()刪掉重複抓到的
-        work_type = "沒有遠距"
-    else:
-        work_type = ",".join(work_type)
-        if work_type == "發展遠景":
-            work_type = "沒有遠距"
+    # keywords = {
+    #     "遠",
+    # }
+    # work_type = set()
+    # for w in contents:
+    #     if w.h3 != None:
+    #         for keyword in w.h3.text:
+    #             if keyword in keywords:
+    #                 work_type.add(w.h3.text)
+    #     if w.p != None:
+    #         for keyword in w.p.text:
+    #             if keyword in keywords:
+    #                 work_type.add(w.p.text)
+    # if work_type == set():  # QQ共用的太多了, 一直重複查找, 先用set()刪掉重複抓到的
+    #     work_type = "沒有遠距"
+    # else:
+    #     work_type = ",".join(work_type)
+    #     if work_type == "發展遠景":
+    #         work_type = "沒有遠距"
 
+    job_work_type = "全職"
     job_experience = ""
     job_category = ""
     job_salary = ""
@@ -100,6 +101,12 @@ def analaze_pages(url):
                 job_skills.update(_extract_job_skills_from_computer_field(content))
             if content.h3.text == "附加條件":
                 job_skills.update(_extract_job_skills_from_additional_field(content))
+            if content.h3.text == "工作性質":
+                job_work_type_text = content.ul.get_text(strip=True)
+                for type_ in ["全職", "兼職", "工讀"]:
+                    if type_ in job_work_type_text:
+                        job_work_type = type_
+                        break
 
     # 出差
     # for job_trip in contents:
@@ -116,7 +123,7 @@ def analaze_pages(url):
         "description": job_description,
         "skills": ",".join(sorted(job_skills)) if job_skills else "",
         "experience": job_experience,
-        "work_type": work_type,
+        "work_type": job_work_type,
         # "其他說明": job_trips,
         "salary": job_salary,
         "update_time": updata_time,
