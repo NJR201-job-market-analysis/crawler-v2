@@ -46,7 +46,7 @@ class Database:
             with engine.connect() as conn:
                 conn.execute("SELECT 1")
 
-            # logger.info("✅ 資料庫連接成功")
+            logger.info("✅ 資料庫連接成功")
 
             return engine
         except Exception as e:
@@ -103,7 +103,7 @@ class Database:
                 ),
             )
 
-            self.jobs_table = Table(
+            self.categories_table = Table(
                 "categories",
                 self.metadata,
                 Column("id", BigInteger, primary_key=True, autoincrement=True),
