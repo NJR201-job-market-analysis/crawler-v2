@@ -4,8 +4,8 @@ import urllib
 import ssl
 import json
 from shared.logger import logger
+
 # from shared.files import save_to_csv
-from .constants import JOB_CATEGORIES
 from ..constants import COMMON_SKILLS
 
 # 直接爬會跳出ssl認證沒過, ssl這行是google來的指令 貼上去後才可以爬取
@@ -177,11 +177,12 @@ HEADERS = {
 }
 
 
-def crawl_1111_jobs_by_category(category_id):
+def crawl_1111_jobs_by_category(category):
     result = []
     page = 1
 
-    category_name = JOB_CATEGORIES[category_id]
+    category_id = category["id"]
+    category_name = category["name"]
 
     logger.info("🐛 開始爬取 1111 職缺 | %s | %s", category_id, category_name)
 
@@ -213,7 +214,8 @@ def crawl_1111_jobs_by_category(category_id):
                 "salary": job_detail["salary"],
                 "experience": job_detail["experience"],
                 "work_type": job_detail["work_type"],
-                "category": job_detail["category"],
+                "category": "軟體 / 工程類人員",
+                "sub_category": category_name,
                 "platform": "1111",
             }
             result.append(data)

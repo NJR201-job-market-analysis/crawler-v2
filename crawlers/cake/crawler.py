@@ -3,7 +3,7 @@ from typing import cast, List
 from bs4 import BeautifulSoup, Tag
 
 from shared.logger import logger
-from shared.files import save_to_csv
+# from shared.files import save_to_csv
 from ..constants import COMMON_SKILLS
 
 BASE_URL = "https://www.cake.me"
@@ -12,23 +12,21 @@ HEADERS = {
 }
 
 
-def crawl_cake_jobs_by_category(category, job_type):
+def crawl_cake_jobs_by_category(category):
     result = []
     page = 1
+    category_id = category["id"]
+    category_name = category["name"]
 
-    logger.info("🐛 開始爬取 | %s | %s", category, job_type)
+    logger.info("🐛 開始爬取 Cake %s 職缺", category_name)
 
     while True:
         # if job_type is None then https://www.cake.me/campaigns/software-developer/jobs?page=1
         # if job_type is it_front-end-engineer then
         # https://www.cake.me/campaigns/software-developer/jobs?page=1&profession[0]=it_front-end-engineer
 
-        base_url = f"{BASE_URL}/campaigns/{category}/jobs?page={page}"
-        url = (
-            base_url + "&profession[0]=" + job_type
-            if job_type is not None
-            else base_url
-        )
+        base_url = f"{BASE_URL}/jobs/categories/it/{category_id}?page={page}"
+        url = base_url
 
         # print("頁面:", url)
 
@@ -99,8 +97,8 @@ def crawl_cake_jobs_by_category(category, job_type):
                 "salary": job_salary,
                 "experience": job_exp,
                 "job_url": job_url,
-                "job_type": job_type,
-                "category": category,
+                "category": "軟體／工程類人員",
+                "sub_category": category_name,
                 "platform": "Cake",
             }
             result.append(data)

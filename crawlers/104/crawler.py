@@ -6,7 +6,7 @@ import json
 from shared.logger import logger
 
 # from shared.files import save_to_csv
-from .constants import JOB_CATEGORIES
+from .constants import job_type_dict
 from ..constants import COMMON_SKILLS
 
 # https://www.104.com.tw/jobs/search/api/jobs?jobcat=2007000000&jobsource=index_s&mode=s&page=1&pagesize=20
@@ -16,20 +16,12 @@ HEADERS = {
     "Referer": "https://www.104.com.tw/jobs/search",
 }
 
-JOB_TYPE_DICT = {
-    1: "全職",
-    2: "兼職",
-    3: "工讀",
-    4: "實習",
-    5: "其他",
-}
 
-
-def crawl_104_jobs_by_category(category_id):
+def crawl_104_jobs_by_category(category):
     result = []
     page = 1
-
-    category_name = JOB_CATEGORIES[category_id]
+    category_id = category["id"]
+    category_name = category["name"]
 
     logger.info("🐛 開始爬取 104 職缺 | %s | %s", category_id, category_name)
 
@@ -52,7 +44,7 @@ def crawl_104_jobs_by_category(category_id):
             job_title = job["header"]["jobName"]
             job_description = job["jobDetail"]["jobDescription"]
             job_location = job["jobDetail"]["addressRegion"]
-            job_work_type = JOB_TYPE_DICT[job["jobDetail"]["jobType"]]
+            job_work_type = job_type_dict[job["jobDetail"]["jobType"]]
             job_salary = (
                 job["jobDetail"]["salary"] if job["jobDetail"]["salary"] else ""
             )
@@ -76,7 +68,8 @@ def crawl_104_jobs_by_category(category_id):
                 "location": job_location,
                 "salary": job_salary,
                 "experience": job_exp,
-                "category": job_category,
+                "category": "軟體 / 工程類人員",
+                "sub_category": category_name,
                 "platform": "104",
             }
             result.append(data)

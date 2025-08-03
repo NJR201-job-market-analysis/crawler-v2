@@ -6,17 +6,17 @@ from .crawler import crawl_104_jobs_by_category
 
 
 @app.task(bind=True)
-def crawl_104_jobs(self, category_id):
+def crawl_104_jobs(self, category):
 
     task_id = self.request.id
     start_time = datetime.now()
 
     try:
-        result = crawl_104_jobs_by_category(category_id)
+        result = crawl_104_jobs_by_category(category=category)
 
         logger.info(
             "🗄️  寫入資料庫 | 📂 %s | 📊 %s 筆",
-            category_id,
+            category["name"],
             len(result),
         )
         Database().insert_jobs(result)
@@ -29,7 +29,8 @@ def crawl_104_jobs(self, category_id):
         return {
             "status": "success",
             "task_id": task_id,
-            "category_id": category_id,
+            "category_id": category["id"],
+            "category_name": category["name"],
             "duration": duration,
             "result_count": len(result),
             "timestamp": end_time.isoformat(),
@@ -44,7 +45,8 @@ def crawl_104_jobs(self, category_id):
             "status": "error",
             "task_id": task_id,
             "error": str(e),
-            "category_id": category_id,
+            "category_id": category["id"],
+            "category_name": category["name"],
             "duration": duration,
             "timestamp": end_time.isoformat(),
         }

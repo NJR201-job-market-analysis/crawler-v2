@@ -50,8 +50,32 @@ class Database:
 
             return engine
         except Exception as e:
-            logger.error("❌ 建立資料庫連線失敗: %s", e)
-            return None
+            logger.warning("⚠️ 無法連接到資料庫 %s，嘗試自動創建: %s", MYSQL_DATABASE, e)
+
+            try:
+                server_address = f"mysql+pymysql://{MYSQL_ACCOUNT}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}"
+                server_engine = create_engine(server_address)
+
+                with server_engine.connect() as conn:
+                    conn.execute(
+                        f"CREATE DATABASE IF NOT EXISTS `{MYSQL_DATABASE}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                    )
+                    logger.info("✅ 資料庫 %s 創建成功", MYSQL_DATABASE)
+
+                server_engine.dispose()
+
+                address = f"mysql+pymysql://{MYSQL_ACCOUNT}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
+                engine = create_engine(address)
+
+                with engine.connect() as conn:
+                    conn.execute("SELECT 1")
+
+                logger.info("✅ 成功連接到新創建的資料庫: %s", MYSQL_DATABASE)
+                return engine
+
+            except Exception as create_error:
+                logger.error("❌ 自動創建資料庫失敗: %s", create_error)
+                return None
 
     def _create_tables(self):
         try:
@@ -71,8 +95,23 @@ class Database:
                 Column("experience", String(100)),
                 Column("job_url", String(500), nullable=False, unique=True),
                 Column("category", String(100)),
-                Column("job_type", String(100)),
+                Column("sub_category", String(100)),
                 Column("platform", String(100)),
+                Column("created_at", DateTime, default=datetime.now),
+                Column(
+                    "updated_at", DateTime, default=datetime.now, onupdate=datetime.now
+                ),
+            )
+
+            self.jobs_table = Table(
+                "categories",
+                self.metadata,
+                Column("id", BigInteger, primary_key=True, autoincrement=True),
+                Column("platform", String(200), nullable=False),
+                Column("category_id", String(200), nullable=False),
+                Column("category_name", Text),
+                Column("sub_category_id", String(200), nullable=False),
+                Column("sub_category_name", Text),
                 Column("created_at", DateTime, default=datetime.now),
                 Column(
                     "updated_at", DateTime, default=datetime.now, onupdate=datetime.now

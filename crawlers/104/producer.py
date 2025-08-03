@@ -1,26 +1,19 @@
 from shared.logger import logger
 from .tasks import crawl_104_jobs
-from .constants import JOB_CATEGORIES
+from .constants import job_categories
 
-# 定義要爬取的分類
-categories = [
-    # 軟體工程類人員
-    "2007001000",
-    # 可以繼續添加更多分類
-]
 
-logger.info("🚀 開始發送 %s 個 104 爬蟲任務", len(categories))
+logger.info("🚀 開始發送 %s 個 104 爬蟲任務", len(job_categories))
 
 tasks = []
 
 # 為每個分類創建一個任務
-for category_id in categories:
-    category_name = JOB_CATEGORIES[category_id]
+for category in job_categories:
 
-    task = crawl_104_jobs.s(category_id=category_id)
+    task = crawl_104_jobs.s(category=category)
     task.apply_async(queue="crawler-queue")
 
     tasks.append(task)
-    logger.info("📤 已發送 104 爬蟲任務: %s | ID: %s", category_name, task.id)
+    logger.info("📤 已發送 104 爬蟲任務: %s | ID: %s", category["name"], task.id)
 
 logger.info("✅ 所有 104 爬蟲任務已發送完成，共 %s 個任務", len(tasks))
