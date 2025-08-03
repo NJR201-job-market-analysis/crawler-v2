@@ -4,8 +4,6 @@ import urllib
 import ssl
 import json
 from shared.logger import logger
-
-# from shared.files import save_to_csv
 from ..constants import COMMON_SKILLS
 
 # 直接爬會跳出ssl認證沒過, ssl這行是google來的指令 貼上去後才可以爬取
@@ -193,8 +191,6 @@ def crawl_1111_jobs_by_category(category):
             break
 
         total_page = json["result"]["pagination"]["totalPage"]
-        if page == total_page:
-            break
 
         for job in json["result"]["hits"]:
             job_id = job["jobId"]
@@ -229,7 +225,8 @@ def crawl_1111_jobs_by_category(category):
 
         page += 1
 
-    # save_to_csv(result, f"1111_jobs_{category_name}")
+        if page > total_page:
+            break
 
     return result
 

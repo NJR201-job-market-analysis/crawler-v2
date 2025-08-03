@@ -1,11 +1,6 @@
 import urllib.request as req
 import json
-
-# from typing import cast, List
-# from bs4 import BeautifulSoup, Tag
 from shared.logger import logger
-
-# from shared.files import save_to_csv
 from .constants import job_type_dict
 from ..constants import COMMON_SKILLS
 
@@ -32,8 +27,6 @@ def crawl_104_jobs_by_category(category):
             break
 
         last_page = json["metadata"]["pagination"]["lastPage"]
-        if page == last_page:
-            break
 
         for tmp in json["data"]:
             job_url = tmp["link"]["job"]
@@ -89,7 +82,8 @@ def crawl_104_jobs_by_category(category):
 
         page += 1
 
-    # save_to_csv(result, f"104_jobs_{category_name}")
+        if page > last_page:
+            break
 
     return result
 
