@@ -38,7 +38,20 @@ def crawl_104_jobs_by_category(category):
         for tmp in json["data"]:
             job_url = tmp["link"]["job"]
             job_id = job_url.split("/")[-1]
+
+            logger.info(
+                "🔍 [104] | %s | %s | %s", tmp["custName"], tmp["jobName"], job_id
+            )
+
             job = fetch_job_detail(job_id)["data"]
+
+            if job is None:
+                logger.info(
+                    "❌ [104] | %s | %s",
+                    tmp["custName"],
+                    tmp["jobName"],
+                )
+                continue
 
             job_company_name = job["header"]["custName"]
             job_title = job["header"]["jobName"]

@@ -59,6 +59,8 @@ def crawl_cake_jobs_by_category(category):
                 job, "a.CampaignJobSearchItem_companyName__i9OXl"
             )
 
+            logger.info("🔍 [Cake] | %s | %s", company_name, job_title.text)
+
             # 這裡的資料不太完整，所以先不使用
             # job_skill_list = job.find_all("div", {"class": "Tags_item__B6Bjo"})
             # ['Golang', 'Java'] > "Golang,Java,"
