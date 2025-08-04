@@ -53,7 +53,7 @@ def crawl_cake_jobs_by_category(category):
 
             company_name = _safe_get_text(job, "a.JobSearchItem_companyName__bY7JI")
 
-            # logger.info("🔍 [Cake] | %s | %s", company_name, job_title.text)
+            logger.info("🔍 [Cake] | %s | %s", company_name, job_title.text)
 
             # 這裡的資料不太完整，所以先不使用
             # job_skill_list = job.find_all("div", {"class": "Tags_item__B6Bjo"})

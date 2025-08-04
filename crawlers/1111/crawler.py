@@ -29,7 +29,8 @@ def analaze_pages(url):
     content = resp.read().decode("utf-8")
     html = bs.BeautifulSoup(content, "html.parser")
 
-    job_description = html.find("div", {"class": "whitespace-pre-line"}).text
+    job_description_element = html.find("div", {"class": "whitespace-pre-line"})
+    job_description = job_description_element.text if job_description_element else ""
     # skills = html.find_all("p", {"class": "underline-offset-1"})
     # 電腦專長(前面是電腦專長list, list最後一項卻是抓出公司名稱, 所以pop掉.
     # 但如果廣告沒有刊登電腦專長, 一樣會抓到公司名稱, 所以沿用pop後變成的空集合, 賦值"沒有刊登電腦專長"
@@ -106,6 +107,8 @@ def analaze_pages(url):
                 city = parts[0] if len(parts) > 0 else None
                 district = parts[1] if len(parts) > 1 else None
                 location = "".join(parts[:3]) if len(parts) >= 2 else None
+            if content.h3.text == "工作技能" and job_description == "":
+                job_description = content.ul.get_text(strip=True)
 
     # 日薪 3,500元~4,500元
     # 日薪 2,500元以上
@@ -185,7 +188,7 @@ def crawl_1111_jobs_by_category(category):
             # job_location = job["workCity"]["name"]
             company_name = job["companyName"]
 
-            # logger.info("🔍 [1111] | %s | %s | %s", company_name, job_title, job_id)
+            logger.info("🔍 [1111] | %s | %s | %s", company_name, job_title, job_id)
 
             job_url = f"https://www.1111.com.tw/job/{job_id}"
             job_detail = analaze_pages(job_url)

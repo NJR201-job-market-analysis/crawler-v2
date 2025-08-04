@@ -35,9 +35,9 @@ def crawl_104_jobs_by_category(category):
             job_url = tmp["link"]["job"]
             job_id = job_url.split("/")[-1]
 
-            # logger.info(
-            #     "🔍 [104] | %s | %s | %s", tmp["custName"], tmp["jobName"], job_id
-            # )
+            logger.info(
+                "🔍 [104] | %s | %s | %s", tmp["custName"], tmp["jobName"], job_id
+            )
 
             job = fetch_job_detail(job_id)["data"]
 
