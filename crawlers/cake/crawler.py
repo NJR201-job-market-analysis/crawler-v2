@@ -75,6 +75,9 @@ def crawl_cake_jobs_by_category(category):
 
             job_url = f"{BASE_URL}{job_title.get('href')}"
             html = _fetch_job_detail_html(job_url)
+            if html == "":
+                continue
+
             job_description = _extract_job_description(html)
             required_skills = _extract_job_skills(html)
 
@@ -92,7 +95,8 @@ def crawl_cake_jobs_by_category(category):
                 salary_type = "面議"
 
             experience_text = _extract_job_experience(job_features)
-            experience_min = int(job_data["job"]["min_work_exp_year"])
+            min_work_exp_year = job_data["job"].get("min_work_exp_year")
+            experience_min = int(min_work_exp_year) if min_work_exp_year else 0
 
             work_type = job_type_dict[job_data["job"]["job_type"]]
 
@@ -128,11 +132,13 @@ def crawl_cake_jobs_by_category(category):
 
     return result
 
+
 def safe_to_int(value):
     try:
         return int(float(value))
     except (ValueError, TypeError):
         return None
+
 
 def _extract_job_skills(job_detail_html):
     try:
