@@ -1,10 +1,18 @@
 import urllib.request as req
 import bs4 as bs
+import re
 import urllib
 import ssl
 import json
 from shared.logger import logger
 from ..constants import COMMON_SKILLS
+
+# https://www.1111.com.tw/api/v1/search/jobs/?page=1&fromOffset=2&jobPositions=140600"
+BASE_URL = "https://www.1111.com.tw/api/v1/search/jobs/"
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+}
 
 # 直接爬會跳出ssl認證沒過, ssl這行是google來的指令 貼上去後才可以爬取
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -56,57 +64,74 @@ def analaze_pages(url):
     # (不用"端"是因為會撈出前端後端)(應該有更好的解法, 待我再研究XD)
     contents = html.find_all("div", {"class": "content"})
 
-    # keywords = {
-    #     "遠",
-    # }
-    # work_type = set()
-    # for w in contents:
-    #     if w.h3 != None:
-    #         for keyword in w.h3.text:
-    #             if keyword in keywords:
-    #                 work_type.add(w.h3.text)
-    #     if w.p != None:
-    #         for keyword in w.p.text:
-    #             if keyword in keywords:
-    #                 work_type.add(w.p.text)
-    # if work_type == set():  # QQ共用的太多了, 一直重複查找, 先用set()刪掉重複抓到的
-    #     work_type = "沒有遠距"
-    # else:
-    #     work_type = ",".join(work_type)
-    #     if work_type == "發展遠景":
-    #         work_type = "沒有遠距"
-
-    job_work_type = "全職"
-    job_experience = ""
-    job_category = ""
-    job_salary = ""
-    job_skills = set()
+    work_type = "全職"
+    experience_text = ""
+    # job_category = ""
+    salary_text = ""
+    city = ""
+    district = ""
+    location = ""
+    required_skills = set()
     # 先從職缺描述中提取技能
-    job_skills.update(_extract_job_skills_from_job_description(job_description))
+    required_skills.update(_extract_job_skills_from_job_description(job_description))
 
     for content in contents:
         if content.h3 != None:
             if content.h3.text == "工作經驗":
                 # print("工作經驗", content.p.text)
-                job_experience = content.p.text
-            if content.h3.text == "職務類別":
-                job_category = ";".join(content.p.text.split("、"))
+                experience_text = content.p.text
+            # if content.h3.text == "職務類別":
+            #     job_category = ";".join(content.p.text.split("、"))
             if content.h3.text == "工作待遇":
-                job_salary = (
+                salary_text = (
                     next(content.select_one("div.text-main").stripped_strings, "")
-                    .replace("(經常性薪資達4萬元或以上)", "")
-                    .replace("(固定或變動薪資因個人資歷或績效而異)", "")
+                    # .replace("(經常性薪資達4萬元或以上)", "")
+                    # .replace("(固定或變動薪資因個人資歷或績效而異)", "")
                 )
             if content.h3.text == "電腦專長":
-                job_skills.update(_extract_job_skills_from_computer_field(content))
+                required_skills.update(_extract_job_skills_from_computer_field(content))
             if content.h3.text == "附加條件":
-                job_skills.update(_extract_job_skills_from_additional_field(content))
+                required_skills.update(
+                    _extract_job_skills_from_additional_field(content)
+                )
             if content.h3.text == "工作性質":
-                job_work_type_text = content.ul.get_text(strip=True)
+                work_type_text = content.ul.get_text(strip=True)
                 for type_ in ["全職", "兼職", "工讀"]:
-                    if type_ in job_work_type_text:
-                        job_work_type = type_
+                    if type_ in work_type_text:
+                        work_type = type_
                         break
+            if content.h3.text == "工作地點":
+                location_text = content.p.text
+                parts = " ".join(location_text.split()).split()
+                city = parts[0] if len(parts) > 0 else None
+                district = parts[1] if len(parts) > 1 else None
+                location = "".join(parts[:3]) if len(parts) >= 2 else None
+
+    # 日薪 3,500元~4,500元
+    # 日薪 2,500元以上
+    salary_min = ""
+    salary_max = ""
+    salary_type = ""
+    if "面議" in salary_text:
+        salary_max = None
+        salary_min = None
+        salary_type = "面議"
+    else:
+        salary_min, salary_max = _extract_salary_range(salary_text)
+        for keyword in ["月薪", "年薪", "日薪", "時薪", "論件計酬"]:
+            if keyword in salary_text:
+                salary_type = keyword
+                break
+
+    experience_min = ""
+    if experience_text == "不拘":
+        experience_min = 0
+    else:
+        match = re.search(r"\d+", experience_text)
+        if match:
+            experience_min = int(match.group())
+        else:
+            experience_min = None
 
     # 出差
     # for job_trip in contents:
@@ -120,66 +145,21 @@ def analaze_pages(url):
     updata_time = html.find("span", {"class": "leading-[1.8] text-[16px]"}).text
 
     data = {
-        "description": job_description,
-        "skills": ",".join(sorted(job_skills)) if job_skills else "",
-        "experience": job_experience,
-        "work_type": job_work_type,
-        # "其他說明": job_trips,
-        "salary": job_salary,
+        "job_description": job_description,
+        "required_skills": ",".join(sorted(required_skills)) if required_skills else "",
+        "experience_text": experience_text,
+        "experience_min": experience_min,
+        "work_type": work_type,
+        "salary_text": salary_text,
+        "salary_min": salary_min,
+        "salary_max": salary_max,
+        "salary_type": salary_type,
+        "city": city,
+        "district": district,
+        "location": location,
         "update_time": updata_time,
-        "category": job_category,
     }
     return data
-
-
-# 查找的關鍵字 中間用+連接 ex.software+engineer
-looking_for = urllib.parse.quote("軟體+工程師")
-looking_for = "desc&ks=" + urllib.parse.quote("軟體+工程師")  # 中文關鍵字
-p_start = 1  # 從第幾頁開始找
-p_limit = 2  # 找到第幾頁
-wfh = False  # 預設不設條件. 但只想找遠端工作, 改成True
-ex = False  # 預設不設條件. 但要找工作經驗"不拘"的, 改成False
-w_place = []  # 預設不限, 若要特定的縣市, 輸入"兩個字", 並以逗號相隔 ex.["台北","桃園"]
-table = []  # 這是張無關緊要的桌子
-
-
-def find_all_pages(looking_for, p_start, p_limit, w_place, wfh, ex):
-    for i in range(p_start, p_limit + 1):
-        url = f"https://www.1111.com.tw/search/job?page={i}&col=ab&sort=desc&ks={looking_for}"
-        r = req.Request(
-            url,
-            headers={
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
-            },
-        )
-        resp = req.urlopen(r)
-        content = resp.read().decode("utf-8")
-        html = bs.BeautifulSoup(content, "html.parser")
-        job_list = html.find_all("div", {"class": "shrink-0"})
-        for h in job_list:
-            if h.find("a", {"class": "mb-1"}) != None:
-                job_url = (
-                    "https://www.1111.com.tw" + h.find("a", {"class": "mb-1"})["href"]
-                )
-                # print(job_url)
-                # print("-"*10)
-                data = analaze_pages(job_url)
-                if wfh == True and data["遠距工作"] == "沒有遠距":
-                    continue
-                if ex == True and data["工作經驗"] != "不拘":
-                    continue
-                if w_place != [] and data["工作地點"][0:2] not in w_place:
-                    continue
-                table.append(data)
-    return table
-
-
-# https://www.1111.com.tw/api/v1/search/jobs/?page=1&fromOffset=2&jobPositions=140600"
-BASE_URL = "https://www.1111.com.tw/api/v1/search/jobs/"
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-}
 
 
 def crawl_1111_jobs_by_category(category):
@@ -191,7 +171,7 @@ def crawl_1111_jobs_by_category(category):
 
     logger.info("🐛 開始爬取 1111 職缺 | %s | %s", category_id, category_name)
 
-    while True:
+    while page < 2:
         json = fetch_job_list(category_id, page)
         if json is None:
             logger.info("請求 category:%s, page:%s 失敗", category_name, page)
@@ -202,7 +182,7 @@ def crawl_1111_jobs_by_category(category):
         for job in json["result"]["hits"]:
             job_id = job["jobId"]
             job_title = job["title"]
-            job_location = job["workCity"]["name"]
+            # job_location = job["workCity"]["name"]
             company_name = job["companyName"]
 
             logger.info("🔍 [1111] | %s | %s | %s", company_name, job_title, job_id)
@@ -217,13 +197,19 @@ def crawl_1111_jobs_by_category(category):
             data = {
                 "job_title": job_title,
                 "company_name": company_name,
-                "location": job_location,
-                "job_url": job_url,
-                "job_description": job_detail["description"],
-                "required_skills": job_detail["skills"],
-                "salary": job_detail["salary"],
-                "experience": job_detail["experience"],
                 "work_type": job_detail["work_type"],
+                "required_skills": job_detail["required_skills"],
+                "job_description": job_detail["job_description"],
+                "salary_text": job_detail["salary_text"],
+                "salary_min": job_detail["salary_min"],
+                "salary_max": job_detail["salary_max"],
+                "salary_type": job_detail["salary_type"],
+                "experience_text": job_detail["experience_text"],
+                "experience_min": job_detail["experience_min"],
+                "city": job_detail["city"],
+                "district": job_detail["district"],
+                "location": job_detail["location"],
+                "job_url": job_url,
                 "category": "軟體 / 工程類人員",
                 "sub_category": category_name,
                 "platform": "1111",
@@ -234,6 +220,8 @@ def crawl_1111_jobs_by_category(category):
 
         if page > total_page:
             break
+
+    logger.info("🔍 [1111] | %s | 總共爬取了 %s 個職缺", category_name, len(result))
 
     return result
 
@@ -251,7 +239,7 @@ def safe_parse_json(res):
 
 def fetch_job_list(category_id, page):
     try:
-        request_url = f"{BASE_URL}?page={page}&jobPositions={category_id}"
+        request_url = f"{BASE_URL}?page={page}&sort=desc&jobPositions={category_id}"
         r = req.Request(request_url)
         r.add_header("User-Agent", HEADERS["User-Agent"])
         res = req.urlopen(r)
@@ -298,3 +286,15 @@ def _extract_job_skills_from_additional_field(soup):
     except Exception as e:
         logger.error("解析附加條件失敗 | %s", e)
         return ""
+
+
+def _extract_salary_range(salary_str):
+    numbers = re.findall(r"\d{1,3}(?:,\d{3})*", salary_str)
+    numbers = [int(num.replace(",", "")) for num in numbers]
+
+    if len(numbers) == 1:
+        return numbers[0], None
+    elif len(numbers) >= 2:
+        return numbers[0], numbers[1]
+    else:
+        return None, None
