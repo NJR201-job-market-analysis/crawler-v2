@@ -130,4 +130,5 @@ salary_type_dict = {
     "per_hour": "時薪",
     "per_year": "年薪",
     "negotiable": "面議",
+    "piece_rate_pay": "論件計酬",
 }
