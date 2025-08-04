@@ -116,3 +116,18 @@ job_categories = [
         "name": "技術經理",
     },
 ]
+
+job_type_dict = {
+    "full_time": "全職",
+    "part_time": "兼職",
+    "internship": "實習生",
+    "contract": "約聘",
+    "freelance": "接案",
+}
+
+salary_type_dict = {
+    "per_month": "月薪",
+    "per_hour": "時薪",
+    "per_year": "年薪",
+    "negotiable": "面議",
+}

@@ -1,8 +1,10 @@
 import urllib.request as req
+import json
 from typing import cast, List
 from bs4 import BeautifulSoup, Tag
 from shared.logger import logger
 from ..constants import COMMON_SKILLS
+from .constants import job_type_dict, salary_type_dict
 
 BASE_URL = "https://www.cake.me"
 HEADERS = {
@@ -51,7 +53,7 @@ def crawl_cake_jobs_by_category(category):
 
             company_name = _safe_get_text(job, "a.JobSearchItem_companyName__bY7JI")
 
-            logger.info("🔍 [Cake] | %s | %s", company_name, job_title.text)
+            # logger.info("🔍 [Cake] | %s | %s", company_name, job_title.text)
 
             # 這裡的資料不太完整，所以先不使用
             # job_skill_list = job.find_all("div", {"class": "Tags_item__B6Bjo"})
@@ -71,25 +73,48 @@ def crawl_cake_jobs_by_category(category):
                 "div.JobSearchItem_features__hR3pk .InlineMessage_inlineMessage____Ulc"
             )
 
-            # 工作類型 (全職、兼職、實習)
-            job_work_type = _safe_get_job_work_type(job_features)
-            job_location = _safe_get_job_location(job_features)
-            job_salary = _safe_get_job_salary(job_features)
-            job_exp = _safe_get_job_experience(job_features)
             job_url = f"{BASE_URL}{job_title.get('href')}"
-            job_detail_html = _fetch_job_detail(job_url)
-            job_description = _extract_job_description(job_detail_html)
-            job_skill = _extract_skills(job_detail_html)
+            html = _fetch_job_detail_html(job_url)
+            job_description = _extract_job_description(html)
+            required_skills = _extract_job_skills(html)
+
+            job_data = _get_job_data(html)
+
+            salary_text = _extract_job_salary(job_features)
+            salary_min = job_data["job"]["salary_min"]
+            salary_max = job_data["job"]["salary_max"]
+            # 預設為 "面議"
+            salary_type = (
+                salary_type_dict.get(job_data["job"].get("salary_type")) or "面議"
+            )
+            # 如果完全沒有薪資範圍，強制為面議
+            if salary_min is None and salary_max is None:
+                salary_type = "面議"
+
+            experience_text = _extract_job_experience(job_features)
+            experience_min = job_data["job"]["min_work_exp_year"]
+
+            work_type = job_type_dict[job_data["job"]["job_type"]]
+
+            city = job_data["company"]["geo_state_name_l"]
+            district = job_data["company"]["geo_city_l"]
+            location = job_data["company"]["geo_formatted_address_l"]
 
             data = {
                 "job_title": job_title.text,
                 "company_name": company_name,
-                "work_type": job_work_type,
-                "required_skills": job_skill,
+                "work_type": work_type,
+                "required_skills": required_skills,
                 "job_description": job_description,
-                "location": job_location,
-                "salary": job_salary,
-                "experience": job_exp,
+                "salary_text": salary_text,
+                "salary_min": salary_min,
+                "salary_max": salary_max,
+                "salary_type": salary_type,
+                "experience_text": experience_text,
+                "experience_min": experience_min,
+                "city": city,
+                "district": district,
+                "location": location,
                 "job_url": job_url,
                 "category": "軟體／工程類人員",
                 "sub_category": category_name,
@@ -99,10 +124,12 @@ def crawl_cake_jobs_by_category(category):
 
         page += 1
 
+    logger.info("🔍 [Cake] | %s | 總共爬取了 %s 個職缺", category_name, len(result))
+
     return result
 
 
-def _extract_skills(job_detail_html):
+def _extract_job_skills(job_detail_html):
     try:
         found_skills = set()
         soup = BeautifulSoup(job_detail_html, features="html.parser")
@@ -141,7 +168,25 @@ def _extract_job_description(job_detail_html):
         return ""
 
 
-def _fetch_job_detail(job_url):
+def _extract_job_salary(job_features):
+    try:
+        for feature in job_features:
+            if feature.select_one("div.InlineMessage_icon__2M_1k .fa.fa-dollar-sign"):
+                return feature.select_one("div.InlineMessage_label__LJGjW").text
+    except (IndexError, AttributeError):
+        return ""
+
+
+def _extract_job_experience(job_features):
+    try:
+        for feature in job_features:
+            if feature.select_one("div.InlineMessage_icon__2M_1k .fa.fa-business-time"):
+                return feature.select_one("div.InlineMessage_label__LJGjW").text
+    except (IndexError, AttributeError):
+        return ""
+
+
+def _fetch_job_detail_html(job_url):
     try:
         r = req.Request(job_url)
         r.add_header(
@@ -162,43 +207,11 @@ def _safe_get_text(soup, selector, default=""):
         return default
 
 
-def _safe_get_job_work_type(job_features):
-    try:
-        for feature in job_features:
-            if feature.select_one("div.InlineMessage_icon__2M_1k .fa.fa-user"):
-                return feature.select_one(
-                    "div.CampaignJobSearchItem_featureSegments___NcD4 > div:first-child > button"
-                ).text
-    except (IndexError, AttributeError):
-        return ""
-
-
-def _safe_get_job_location(job_features):
-    try:
-        for feature in job_features:
-            if feature.select_one(
-                "div.InlineMessage_icon__2M_1k .fa.fa-map-marker-alt"
-            ):
-                return feature.select_one(
-                    "div.CampaignJobSearchItem_featureSegments___NcD4 span"
-                ).text
-    except (IndexError, AttributeError):
-        return ""
-
-
-def _safe_get_job_salary(job_features):
-    try:
-        for feature in job_features:
-            if feature.select_one("div.InlineMessage_icon__2M_1k .fa.fa-dollar-sign"):
-                return feature.select_one("div.InlineMessage_label__LJGjW").text
-    except (IndexError, AttributeError):
-        return ""
-
-
-def _safe_get_job_experience(job_features):
-    try:
-        for feature in job_features:
-            if feature.select_one("div.InlineMessage_icon__2M_1k .fa.fa-business-time"):
-                return feature.select_one("div.InlineMessage_label__LJGjW").text
-    except (IndexError, AttributeError):
-        return ""
+def _get_job_data(html):
+    soup = BeautifulSoup(html, features="html.parser")
+    script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
+    if script_tag:
+        json_data = json.loads(script_tag.string)
+        page_props = json_data.get("props", {}).get("pageProps", {})
+        return page_props
+    return {}
