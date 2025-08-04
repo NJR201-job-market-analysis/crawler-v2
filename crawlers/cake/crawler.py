@@ -20,7 +20,7 @@ def crawl_cake_jobs_by_category(category):
 
     logger.info("🐛 開始爬取 Cake 職缺 | %s", category_name)
 
-    while True:
+    while page < 2:
         # if job_type is None then https://www.cake.me/campaigns/software-developer/jobs?page=1
         # if job_type is it_front-end-engineer then
         # https://www.cake.me/campaigns/software-developer/jobs?page=1&profession[0]=it_front-end-engineer
@@ -81,8 +81,8 @@ def crawl_cake_jobs_by_category(category):
             job_data = _get_job_data(html)
 
             salary_text = _extract_job_salary(job_features)
-            salary_min = job_data["job"]["salary_min"]
-            salary_max = job_data["job"]["salary_max"]
+            salary_min = int(float(job_data["job"]["salary_min"]))
+            salary_max = int(float(job_data["job"]["salary_max"]))
             # 預設為 "面議"
             salary_type = (
                 salary_type_dict.get(job_data["job"].get("salary_type")) or "面議"
@@ -92,7 +92,7 @@ def crawl_cake_jobs_by_category(category):
                 salary_type = "面議"
 
             experience_text = _extract_job_experience(job_features)
-            experience_min = job_data["job"]["min_work_exp_year"]
+            experience_min = int(job_data["job"]["min_work_exp_year"])
 
             work_type = job_type_dict[job_data["job"]["job_type"]]
 

@@ -93,12 +93,12 @@ class Database:
                 Column("company_description", Text),
                 Column("salary_min", Integer),
                 Column("salary_max", Integer),
-                Column("salary_type", String(100)),
+                Column("salary_type", String(20)),
                 Column("salary_text", String(100)),
                 Column("experience_text", String(100)),
                 Column("experience_min", Integer),
-                Column("city", String(100)),
-                Column("district", String(100)),
+                Column("city", String(20)),
+                Column("district", String(20)),
                 # Column("address", String(200)),
                 Column("location", String(200)),
                 Column("job_url", String(500), nullable=False, unique=True),
@@ -138,6 +138,16 @@ class Database:
             return False
 
         df = pd.DataFrame(jobs)
+        
+        # 將這些可能有缺值的整數欄轉成 nullable Int64 dtype
+        nullable_int_cols = ["salary_min", "salary_max", "experience_min"]
+        for col in nullable_int_cols:
+            if col in df.columns:
+                df[col] = df[col].astype("Int64")
+
+        # 將 NaN 轉成 None（更保險）
+        df = df.where(pd.notnull(df), None)
+
         success_count = 0
         insert_count = 0
         update_count = 0
@@ -184,6 +194,11 @@ class Database:
                 logger.error("❌ 處理職位資料失敗: %s", e)
                 logger.error("   職位標題: %s", row.get("job_title", "Unknown"))
                 logger.error("   job_url: %s", row.get("job_url", "Unknown"))
+                logger.error(
+                    "   job_salary: %s | %s",
+                    row.get("salary_min", "Unknown"),
+                    row.get("salary_max"),
+                )
                 continue
 
         logger.info("✅ 寫入資料庫完成:")

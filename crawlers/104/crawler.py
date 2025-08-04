@@ -21,15 +21,15 @@ def crawl_104_jobs_by_category(category):
 
     logger.info("🐛 開始爬取 104 職缺 | %s | %s", category_id, category_name)
 
-    while page < 2:
-        json = fetch_job_list(category_id, page)
-        if json is None:
+    while True:
+        job_list_res = fetch_job_list(category_id, page)
+        if job_list_res is None:
             logger.info("請求 category:%s, page:%s 失敗", category_name, page)
             break
 
-        last_page = json["metadata"]["pagination"]["lastPage"]
+        last_page = job_list_res["metadata"]["pagination"]["lastPage"]
 
-        for tmp in json["data"]:
+        for tmp in job_list_res["data"]:
             job_url = tmp["link"]["job"]
             job_id = job_url.split("/")[-1]
 
