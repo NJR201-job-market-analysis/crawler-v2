@@ -106,7 +106,7 @@ def crawl_104_jobs_by_category(category):
             }
             result.append(data)
 
-        time.sleep(random.randint(0.5, 1.5))
+            time.sleep(random.uniform(0.5, 1.5))
 
         page += 1
 
