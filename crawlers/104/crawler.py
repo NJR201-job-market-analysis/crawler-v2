@@ -1,6 +1,8 @@
 import urllib.request as req
 import json
 import re
+import time
+import random
 from shared.logger import logger
 from .constants import job_type_dict, salary_type_dict
 from ..constants import COMMON_SKILLS
@@ -103,6 +105,8 @@ def crawl_104_jobs_by_category(category):
                 "platform": "104",
             }
             result.append(data)
+
+        time.sleep(random.randint(0.5, 1.5))
 
         page += 1
 

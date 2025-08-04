@@ -81,8 +81,8 @@ def crawl_cake_jobs_by_category(category):
             job_data = _get_job_data(html)
 
             salary_text = _extract_job_salary(job_features)
-            salary_min = int(float(job_data["job"]["salary_min"]))
-            salary_max = int(float(job_data["job"]["salary_max"]))
+            salary_min = safe_to_int(job_data["job"].get("salary_min"))
+            salary_max = safe_to_int(job_data["job"].get("salary_max"))
             # 預設為 "面議"
             salary_type = (
                 salary_type_dict.get(job_data["job"].get("salary_type")) or "面議"
@@ -128,6 +128,11 @@ def crawl_cake_jobs_by_category(category):
 
     return result
 
+def safe_to_int(value):
+    try:
+        return int(float(value))
+    except (ValueError, TypeError):
+        return None
 
 def _extract_job_skills(job_detail_html):
     try:
