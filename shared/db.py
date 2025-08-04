@@ -90,7 +90,6 @@ class Database:
                 Column("job_description", Text),
                 Column("work_type", String(100)),
                 Column("required_skills", Text),
-                Column("company_description", Text),
                 Column("salary_min", Integer),
                 Column("salary_max", Integer),
                 Column("salary_type", String(20)),
@@ -194,11 +193,6 @@ class Database:
                 logger.error("❌ 處理職位資料失敗: %s", e)
                 logger.error("   職位標題: %s", row.get("job_title", "Unknown"))
                 logger.error("   job_url: %s", row.get("job_url", "Unknown"))
-                logger.error(
-                    "   job_salary: %s | %s",
-                    row.get("salary_min", "Unknown"),
-                    row.get("salary_max"),
-                )
                 continue
 
         logger.info("✅ 寫入資料庫完成:")

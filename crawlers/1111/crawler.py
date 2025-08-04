@@ -185,7 +185,7 @@ def crawl_1111_jobs_by_category(category):
             # job_location = job["workCity"]["name"]
             company_name = job["companyName"]
 
-            logger.info("🔍 [1111] | %s | %s | %s", company_name, job_title, job_id)
+            # logger.info("🔍 [1111] | %s | %s | %s", company_name, job_title, job_id)
 
             job_url = f"https://www.1111.com.tw/job/{job_id}"
             job_detail = analaze_pages(job_url)
