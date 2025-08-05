@@ -19,15 +19,19 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def analaze_pages(url):
-    r = req.Request(
-        url,
-        headers={
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
-        },
-    )
-    resp = req.urlopen(r)
-    content = resp.read().decode("utf-8")
-    html = bs.BeautifulSoup(content, "html.parser")
+    try:
+        r = req.Request(
+            url,
+            headers={
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+            },
+        )
+        resp = req.urlopen(r)
+        content = resp.read().decode("utf-8")
+        html = bs.BeautifulSoup(content, "html.parser")
+    except Exception as e:
+        logger.error("解析職缺描述失敗 | %s", e)
+        return None
 
     job_description_element = html.find("div", {"class": "whitespace-pre-line"})
     job_description = job_description_element.text if job_description_element else ""
