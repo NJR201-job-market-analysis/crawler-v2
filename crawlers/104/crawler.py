@@ -39,16 +39,23 @@ def crawl_104_jobs_by_category(category):
                 "🔍 [104] | %s | %s | %s", tmp["custName"], tmp["jobName"], job_id
             )
 
-            job_res = fetch_job_detail(job_id)["data"]
+            job_res = fetch_job_detail(job_id)
 
             if job_res is None:
                 logger.info(
-                    "❌ [104] | %s | %s",
+                    "❌ [104] 未成功取得職缺 | %s | %s",
                     tmp["custName"],
                     tmp["jobName"],
                 )
                 continue
             job = job_res["data"]
+            if job is None:
+                logger.info(
+                    "❌ [104] 未成功取得職缺 | %s | %s",
+                    tmp["custName"],
+                    tmp["jobName"],
+                )
+                continue
 
             job_detail = job["jobDetail"]
 

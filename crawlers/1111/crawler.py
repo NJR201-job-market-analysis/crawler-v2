@@ -112,7 +112,7 @@ def analaze_pages(url):
                 district = parts[1] if len(parts) > 1 else None
                 location = "".join(parts[:3]) if len(parts) >= 2 else None
             if content.h3.text == "工作技能" and job_description == "":
-                job_description = content.ul.get_text(strip=True)
+                job_description = content.ul.get_text(strip=True) if content.ul else ""
 
     # 日薪 3,500元~4,500元
     # 日薪 2,500元以上
