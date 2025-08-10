@@ -3,6 +3,7 @@ import json
 import re
 import time
 import random
+import ssl
 from shared.logger import logger
 from .constants import job_type_dict, salary_type_dict
 from ..constants import COMMON_SKILLS
@@ -13,6 +14,8 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0",
     "Referer": "https://www.104.com.tw/jobs/search",
 }
+
+ssl_context = ssl._create_unverified_context()
 
 
 def crawl_104_jobs_by_category(category):
@@ -114,7 +117,7 @@ def crawl_104_jobs_by_category(category):
             }
             result.append(data)
 
-            time.sleep(random.uniform(0.5, 1.5))
+            time.sleep(random.uniform(3, 5))
 
         page += 1
 
@@ -132,8 +135,11 @@ def safe_parse_json(res):
         json_str = data.decode("utf-8")
         json_data = json.loads(json_str)
         return json_data
-    except Exception as e:
+    except json.JSONDecodeError as e:
         logger.error("解析 JSON 失敗 | %s", e)
+        return None
+    except Exception as e:
+        logger.error("處理響應時發生未知錯誤 | %s", e)
         return None
 
 
@@ -151,10 +157,13 @@ def fetch_job_list(category_id, page):
         r = req.Request(request_url)
         r.add_header("User-Agent", HEADERS["User-Agent"])
         r.add_header("Referer", HEADERS["Referer"])
-        res = req.urlopen(r)
+        res = req.urlopen(r, context=ssl_context)
         return safe_parse_json(res)
-    except Exception as e:
+    except req.URLError as e:
         logger.error("請求 %s 失敗 | %s", request_url, e)
+        return None
+    except Exception as e:
+        logger.error("請求 %s 發生未知錯誤 | %s", request_url, e)
         return None
 
 
@@ -164,8 +173,11 @@ def fetch_job_detail(job_id):
     r.add_header("User-Agent", HEADERS["User-Agent"])
     r.add_header("Referer", HEADERS["Referer"])
     try:
-        res = req.urlopen(r)
+        res = req.urlopen(r, context=ssl_context)
         return safe_parse_json(res)
-    except Exception as e:
+    except req.URLError as e:
         logger.error("請求 %s 失敗 | %s", job_url, e)
+        return None
+    except Exception as e:
+        logger.error("請求 %s 發生未知錯誤 | %s", job_url, e)
         return None

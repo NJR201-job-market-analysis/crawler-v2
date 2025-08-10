@@ -85,29 +85,27 @@ class Database:
                 "jobs",
                 self.metadata,
                 Column("id", BigInteger, primary_key=True, autoincrement=True),
-                Column("job_title", String(200), nullable=False),
-                Column("company_name", String(200), nullable=False),
-                Column("job_description", Text),
-                Column("work_type", String(100)),
-                Column("required_skills", Text),
-                Column("salary_min", Integer),
-                Column("salary_max", Integer),
-                Column("salary_type", String(20)),
-                Column("salary_text", String(100)),
-                Column("experience_text", String(100)),
-                Column("experience_min", Integer),
-                Column("city", String(50)),
-                Column("district", String(50)),
+                Column("job_title", String(200), nullable=False), # 職位名稱
+                Column("company_name", String(200), nullable=False), # 公司名稱
+                Column("job_description", Text), # 職位描述
+                Column("work_type", String(100)), # 全職、兼職、實習、工讀生
+                Column("required_skills", Text), # 技能需求
+                Column("salary_min", Integer), # 薪資下限
+                Column("salary_max", Integer), # 薪資上限
+                Column("salary_type", String(20)), # 月薪、年薪
+                Column("salary_text", String(100)), # 薪資描述
+                Column("experience_text", String(100)), # 經驗描述
+                Column("experience_min", Integer), # 經驗下限
+                Column("city", String(50)), # 城市
+                Column("district", String(50)), # 區域
                 # Column("address", String(200)),
-                Column("location", String(200)),
-                Column("job_url", String(500), nullable=False, unique=True),
-                Column("category", String(100)),
-                Column("sub_category", String(100)),
-                Column("platform", String(100)),
-                Column("created_at", DateTime, default=datetime.now),
-                Column(
-                    "updated_at", DateTime, default=datetime.now, onupdate=datetime.now
-                ),
+                Column("location", String(200)), # 地址
+                Column("job_url", String(500), nullable=False, unique=True), # 職位連結
+                Column("category", String(100)), # 職務類別
+                Column("sub_category", String(100)), # 職務子類別
+                Column("platform", String(100)), # 平台
+                Column("created_at", DateTime, default=datetime.now), # 建立時間
+                Column("updated_at", DateTime, default=datetime.now, onupdate=datetime.now), # 更新時間
             )
 
             self.categories_table = Table(
