@@ -79,20 +79,20 @@ def crawl_cake_jobs_by_category(category):
                 continue
 
             job_description = _extract_job_description(html)
-            required_skills = _extract_job_skills(html)
+            skills = _extract_job_skills(html)
+            raw_skills = ",".join(sorted(skills)) if skills else ""
+            categories = [category_name]
 
             job_data = _get_job_data(html)
 
             salary_text = _extract_job_salary(job_features)
             salary_min = safe_to_int(job_data["job"].get("salary_min"))
             salary_max = safe_to_int(job_data["job"].get("salary_max"))
-            # 預設為 "面議"
             salary_type = (
                 salary_type_dict.get(job_data["job"].get("salary_type")) or "面議"
             )
-            # 如果完全沒有薪資範圍，強制為面議
-            if salary_min is None and salary_max is None:
-                salary_type = "面議"
+            if salary_type == "面議" and salary_min is None and salary_max is None:
+                salary_min = 40000
 
             experience_text = _extract_job_experience(job_features)
             min_work_exp_year = job_data["job"].get("min_work_exp_year")
@@ -108,7 +108,7 @@ def crawl_cake_jobs_by_category(category):
                 "job_title": job_title.text,
                 "company_name": company_name,
                 "work_type": work_type,
-                "required_skills": required_skills,
+                "required_skills": raw_skills,
                 "job_description": job_description,
                 "salary_text": salary_text,
                 "salary_min": salary_min,
@@ -120,9 +120,9 @@ def crawl_cake_jobs_by_category(category):
                 "district": district,
                 "location": location,
                 "job_url": job_url,
-                "category": "軟體／工程類人員",
-                "sub_category": category_name,
                 "platform": "Cake",
+                "skills": skills,
+                "categories": categories,
             }
             result.append(data)
 
@@ -153,7 +153,7 @@ def _extract_job_skills(job_detail_html):
                 for skill in COMMON_SKILLS:
                     if skill.lower() in line_lower:
                         found_skills.add(skill)
-        return ",".join(sorted(found_skills)) if found_skills else ""
+        return found_skills
     except Exception as e:
         logger.error("Failed to parse skills: %s", e)
         return ""

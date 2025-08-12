@@ -6,7 +6,7 @@ import random
 import ssl
 from shared.logger import logger
 from .constants import job_type_dict, salary_type_dict
-from ..constants import COMMON_SKILLS
+from ..constants import COMMON_SKILLS, job_category_mapping
 
 # https://www.104.com.tw/jobs/search/api/jobs?jobcat=2007000000&jobsource=index_s&mode=s&page=1&pagesize=20
 BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs"
@@ -65,7 +65,12 @@ def crawl_104_jobs_by_category(category):
             company_name = job["header"]["custName"]
             job_title = job["header"]["jobName"]
             job_description = job_detail["jobDescription"]
-            required_skills = extract_skills(job_description)
+            skills = extract_skills(job_description)
+            raw_skills = ",".join(sorted(skills)) if skills else ""
+            categories = [
+                job_category_mapping[category["description"]]
+                for category in job_detail["jobCategory"]
+            ]
 
             city = job_detail["addressArea"]
             district = job_detail["addressRegion"].replace(city, "")
@@ -82,7 +87,9 @@ def crawl_104_jobs_by_category(category):
                 if job_detail["salaryMax"] != 9999999 and job_detail["salaryMax"] != 0
                 else None
             )
-            salary_type = salary_type_dict.get(job_detail["salaryType"]) or "negotiable"
+            salary_type = salary_type_dict.get(job_detail["salaryType"]) or "面議"
+            if salary_type == "面議" and salary_min is None and salary_max is None:
+                salary_min = 40000
 
             experience_text = job["condition"]["workExp"] or ""
             experience_min = ""
@@ -99,7 +106,7 @@ def crawl_104_jobs_by_category(category):
                 "job_title": job_title,
                 "company_name": company_name,
                 "work_type": work_type,
-                "required_skills": required_skills,
+                "required_skills": raw_skills,
                 "job_description": job_description,
                 "salary_text": salary_text,
                 "salary_min": salary_min,
@@ -111,9 +118,9 @@ def crawl_104_jobs_by_category(category):
                 "district": district,
                 "location": location,
                 "job_url": job_url,
-                "category": "軟體 / 工程類人員",
-                "sub_category": category_name,
                 "platform": "104",
+                "categories": categories,
+                "skills": skills,
             }
             result.append(data)
 
@@ -148,7 +155,7 @@ def extract_skills(job_description):
     for skill in COMMON_SKILLS:
         if skill.lower() in job_description.lower():
             found_skills.add(skill)
-    return ",".join(sorted(found_skills)) if found_skills else ""
+    return found_skills
 
 
 def fetch_job_list(category_id, page):

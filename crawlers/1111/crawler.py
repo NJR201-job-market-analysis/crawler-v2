@@ -1,11 +1,11 @@
 import urllib.request as req
 import bs4 as bs
 import re
-import urllib
 import ssl
 import json
 from shared.logger import logger
 from ..constants import COMMON_SKILLS
+from ..utils import extract_salary_range, extract_experience_min
 
 # https://www.1111.com.tw/api/v1/search/jobs/?page=1&fromOffset=2&jobPositions=140600"
 BASE_URL = "https://www.1111.com.tw/api/v1/search/jobs/"
@@ -35,15 +35,6 @@ def analaze_pages(url):
 
     job_description_element = html.find("div", {"class": "whitespace-pre-line"})
     job_description = job_description_element.text if job_description_element else ""
-    # skills = html.find_all("p", {"class": "underline-offset-1"})
-    # 電腦專長(前面是電腦專長list, list最後一項卻是抓出公司名稱, 所以pop掉.
-    # 但如果廣告沒有刊登電腦專長, 一樣會抓到公司名稱, 所以沿用pop後變成的空集合, 賦值"沒有刊登電腦專長"
-    # skill_list = []
-    # for skill in skills:
-    #     skill_list.append(skill.text)
-    # skill_list.pop()
-    # if skill_list == []:
-    #     skill_list = "沒有刊登電腦專長"
 
     # 地址的標頭和"class"有兩種...#爬出來的地址會參雜一堆空格和換行, 這裡先設一個空list,
     # 再用for in回圈寫入有意義的文字(空格和換行符號不寫入)
@@ -65,8 +56,6 @@ def analaze_pages(url):
                 continue  # 不寫入空格" "和換行符號"\n" 遇到就回前面, 不執行append(a)
             work_place_location = work_place_location + s
 
-    # 遠端 有的公司直接缺少該欄位 用class會撈到別的東西 所以查找關鍵字"遠端上班"的"遠"
-    # (不用"端"是因為會撈出前端後端)(應該有更好的解法, 待我再研究XD)
     contents = html.find_all("div", {"class": "content"})
 
     work_type = "全職"
@@ -76,9 +65,10 @@ def analaze_pages(url):
     city = ""
     district = ""
     location = ""
-    required_skills = set()
+    categories = []
+    skills = set()
     # 先從職缺描述中提取技能
-    required_skills.update(_extract_job_skills_from_job_description(job_description))
+    skills.update(_extract_job_skills_from_job_description(job_description))
 
     for content in contents:
         if content.h3 != None:
@@ -94,11 +84,9 @@ def analaze_pages(url):
                     # .replace("(固定或變動薪資因個人資歷或績效而異)", "")
                 )
             if content.h3.text == "電腦專長":
-                required_skills.update(_extract_job_skills_from_computer_field(content))
+                skills.update(_extract_job_skills_from_computer_field(content))
             if content.h3.text == "附加條件":
-                required_skills.update(
-                    _extract_job_skills_from_additional_field(content)
-                )
+                skills.update(_extract_job_skills_from_additional_field(content))
             if content.h3.text == "工作性質":
                 work_type_text = content.ul.get_text(strip=True)
                 for type_ in ["全職", "兼職", "工讀"]:
@@ -113,6 +101,9 @@ def analaze_pages(url):
                 location = "".join(parts[:3]) if len(parts) >= 2 else None
             if content.h3.text == "工作技能" and job_description == "":
                 job_description = content.ul.get_text(strip=True) if content.ul else ""
+            if content.h3.text == "職務類別":
+                for category in content.select("ul li p"):
+                    categories.append(category.text)
 
     # 日薪 3,500元~4,500元
     # 日薪 2,500元以上
@@ -120,40 +111,26 @@ def analaze_pages(url):
     salary_max = ""
     salary_type = ""
     if "面議" in salary_text:
+        salary_min = 40000
         salary_max = None
-        salary_min = None
         salary_type = "面議"
     else:
-        salary_min, salary_max = _extract_salary_range(salary_text)
+        salary_min, salary_max = extract_salary_range(salary_text)
         for keyword in ["月薪", "年薪", "日薪", "時薪", "論件計酬"]:
             if keyword in salary_text:
                 salary_type = keyword
                 break
 
-    experience_min = ""
-    if experience_text == "不拘":
-        experience_min = 0
-    else:
-        match = re.search(r"\d+", experience_text)
-        if match:
-            experience_min = int(match.group())
-        else:
-            experience_min = None
-
-    # 出差
-    # for job_trip in contents:
-    #     if job_trip.h3 != None:
-    #         if job_trip.h3 == "其他說明":
-    #             job_trips = job_trip.p.text
-    #         else:
-    #             job_trips = "不用出差"
+    experience_min = extract_experience_min(experience_text)
 
     # 更新時間
     updata_time = html.find("span", {"class": "leading-[1.8] text-[16px]"}).text
 
+    raw_skills = ",".join(sorted(skills)) if skills else ""
+
     data = {
         "job_description": job_description,
-        "required_skills": ",".join(sorted(required_skills)) if required_skills else "",
+        "required_skills": raw_skills,
         "experience_text": experience_text,
         "experience_min": experience_min,
         "work_type": work_type,
@@ -165,6 +142,8 @@ def analaze_pages(url):
         "district": district,
         "location": location,
         "update_time": updata_time,
+        "skills": skills,
+        "categories": categories,
     }
     return data
 
@@ -217,9 +196,9 @@ def crawl_1111_jobs_by_category(category):
                 "district": job_detail["district"],
                 "location": job_detail["location"],
                 "job_url": job_url,
-                "category": "軟體 / 工程類人員",
-                "sub_category": category_name,
                 "platform": "1111",
+                "skills": job_detail["skills"],
+                "categories": job_detail["categories"],
             }
             result.append(data)
 
@@ -294,14 +273,3 @@ def _extract_job_skills_from_additional_field(soup):
         logger.error("解析附加條件失敗 | %s", e)
         return ""
 
-
-def _extract_salary_range(salary_str):
-    numbers = re.findall(r"\d{1,3}(?:,\d{3})*", salary_str)
-    numbers = [int(num.replace(",", "")) for num in numbers]
-
-    if len(numbers) == 1:
-        return numbers[0], None
-    elif len(numbers) >= 2:
-        return numbers[0], numbers[1]
-    else:
-        return None, None

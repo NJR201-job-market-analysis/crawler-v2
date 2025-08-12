@@ -27,7 +27,7 @@ COMMON_SKILLS = [
     "MySQL",
     "PostgreSQL",
     "MSSQL",
-    "Oracle",
+    "MS SQL" "Oracle",
     "MongoDB",
     "Redis",
     "ElasticSearch",
@@ -72,6 +72,8 @@ COMMON_SKILLS = [
     "GraphQL",
     "Graphql",
     "RESTful",
+    "RESTful API",
+    "Web API",
     "gRPC",
     "Pubsub",
     "Message Queue",
@@ -83,6 +85,18 @@ COMMON_SKILLS = [
     "Agile",
     "Scrum",
     "Kanban",
+    "Spring Boot",
+    "Spring",
+    "T-SQL",
+    "Nuxt",
+    "Vite",
+    "Svelte",
+    "SSR",
+    "Server-Side Rendering",
+    "Unit Test",
+    "E2E Test",
+    "Clean Code",
+    "JUnit",
     # ...可再擴充...
 ]
 
@@ -111,6 +125,29 @@ EXPERIENCE_KEYWORDS_SIMPLE = [
     "minimum of",
     # ...可再擴充...
 ]
+
+number_text_mapping = {
+    "一": "1",
+    "二": "2",
+    "三": "3",
+    "四": "4",
+    "五": "5",
+    "六": "6",
+    "七": "7",
+    "八": "8",
+    "九": "9",
+    "十": "10",
+    "十一": "11",
+    "十二": "12",
+    "十三": "13",
+    "十四": "14",
+    "十五": "15",
+    "十六": "16",
+    "十七": "17",
+    "十八": "18",
+    "十九": "19",
+    "二十": "20",
+}
 
 job_category_mapping = {
     "iOS工程師": "APP工程師",
@@ -170,7 +207,6 @@ job_category_mapping = {
     "CIM工程師": "其他資訊專業人員",  # 1111
     "網站技術主管": "專案/技術主管",  # 1111
     "網站程式設計師": "網站開發人員",  # 1111
-    "電子商務技術主管": "專案/技術主管",  # 1111
     "資料科學工程主管": "專案/技術主管",  # 1111
     "數據科學家": "資料科學家",  # 1111
     "數據分析師": "數據分析師",  # 1111
@@ -189,4 +225,17 @@ job_category_mapping = {
     "自動化測試工程師": "軟體測試工程師",  # 1111
     "電玩工程師": "電玩程式設計師",  # 1111
     "APP工程師": "APP工程師",  # 1111
+    "前端工程": "前端工程師",
+    "後端工程": "後端工程師",
+    "全端工程": "全端工程師",
+    "行動裝置開發": "APP工程師",
+    "iOS 工程師": "APP工程師",
+    "Android 工程師": "APP工程師",
+    "遊戲開發": "電玩程式設計師",
+    "測試工程": "軟體測試工程師",
+    "資料庫": "資料庫管理人員",
+    "DevOps / SRE": "DevOps工程師",
+    "資料工程 / 機器學習": "資料工程師",
+    "AI 工程師": "演算法工程師",
+    "系統架構師": "系統工程師",
 }
