@@ -22,7 +22,7 @@ job_categories = [
 	"AI 工程師"
 ]
 
-logger.info("🚀 開始發送 %s 個 1111 爬蟲任務", len(job_categories))
+logger.info("🚀 開始發送 %s 個 Yourator 爬蟲任務", len(job_categories))
 
 tasks = []
 
