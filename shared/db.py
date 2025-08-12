@@ -2,15 +2,10 @@ from datetime import datetime
 import pandas as pd
 from sqlalchemy import create_engine  # 建立資料庫連線的工具（SQLAlchemy）
 from sqlalchemy import (
-    BigInteger,
-    Column,
-    DateTime,
-    String,
-    Text,
     MetaData,
-    String,
+    select,
     Table,
-    Integer,
+    delete,
 )
 from sqlalchemy.dialects.mysql import (
     insert,
@@ -33,7 +28,28 @@ class Database:
             return
 
         self.metadata = MetaData()
-        self._create_tables()
+        self.metadata.reflect(bind=self.engine)
+
+        self.jobs_table = self.metadata.tables.get("jobs")
+        self.skills_table = self.metadata.tables.get("skills")
+        self.categories_table = self.metadata.tables.get("categories")
+        self.jobs_skills_table = self.metadata.tables.get("jobs_skills")
+        self.jobs_categories_table = self.metadata.tables.get("jobs_categories")
+
+        if any(
+            table is None
+            for table in [
+                self.jobs_table,
+                self.skills_table,
+                self.categories_table,
+                self.jobs_skills_table,
+                self.jobs_categories_table,
+            ]
+        ):
+            logger.error(
+                "❌ 一或多個必要的資料表不存在，請先執行 `database/init_db.py`"
+            )
+            raise ValueError("資料表未被正確初始化")
 
     def create_database_connection(self):
         try:
@@ -78,126 +94,154 @@ class Database:
                 logger.error("❌ 自動創建資料庫失敗: %s", create_error)
                 return None
 
-    def _create_tables(self):
-        try:
-            # 定義結構
-            self.jobs_table = Table(
-                "jobs",
-                self.metadata,
-                Column("id", BigInteger, primary_key=True, autoincrement=True),
-                Column("job_title", String(200), nullable=False), # 職位名稱
-                Column("company_name", String(200), nullable=False), # 公司名稱
-                Column("job_description", Text), # 職位描述
-                Column("work_type", String(100)), # 全職、兼職、實習、工讀生
-                Column("required_skills", Text), # 技能需求
-                Column("salary_min", Integer), # 薪資下限
-                Column("salary_max", Integer), # 薪資上限
-                Column("salary_type", String(20)), # 月薪、年薪
-                Column("salary_text", String(100)), # 薪資描述
-                Column("experience_text", String(100)), # 經驗描述
-                Column("experience_min", Integer), # 經驗下限
-                Column("city", String(50)), # 城市
-                Column("district", String(50)), # 區域
-                # Column("address", String(200)),
-                Column("location", String(200)), # 地址
-                Column("job_url", String(500), nullable=False, unique=True), # 職位連結
-                Column("category", String(100)), # 職務類別
-                Column("sub_category", String(100)), # 職務子類別
-                Column("platform", String(100)), # 平台
-                Column("created_at", DateTime, default=datetime.now), # 建立時間
-                Column("updated_at", DateTime, default=datetime.now, onupdate=datetime.now), # 更新時間
+    def _get_or_create_items(
+        self, conn, names: set[str], table: Table
+    ) -> dict[str, int]:
+        name_to_id: dict[str, int] = {}
+        if not names:
+            return name_to_id
+
+        # 1. 查詢已存在的項目
+        stmt = select(table.c.id, table.c.name).where(table.c.name.in_(names))
+        result = conn.execute(stmt)
+        for row in result:
+            # SQLAlchemy Core 的 row 物件可以像元組或字典一樣訪問
+            name_to_id[row.name] = row.id
+
+        # 2. 找出需要新增的項目
+        new_names = names - set(name_to_id.keys())
+
+        # 3. 批次新增新項目
+        if new_names:
+            new_items_data = [{"name": name} for name in new_names]
+            # 使用 IGNORE 防止因平行處理造成的重複新增錯誤
+            insert_stmt = insert(table).values(new_items_data).prefix_with("IGNORE")
+            conn.execute(insert_stmt)
+
+            # 重新查詢以取得所有（包含剛剛新增的）項目的 ID
+            stmt_requery = select(table.c.id, table.c.name).where(
+                table.c.name.in_(names)
             )
+            result_requery = conn.execute(stmt_requery)
+            for row in result_requery:
+                name_to_id[row.name] = row.id
 
-            self.categories_table = Table(
-                "categories",
-                self.metadata,
-                Column("id", BigInteger, primary_key=True, autoincrement=True),
-                Column("platform", String(200), nullable=False),
-                Column("category_id", String(200), nullable=False),
-                Column("category_name", Text),
-                Column("sub_category_id", String(200), nullable=False),
-                Column("sub_category_name", Text),
-                Column("created_at", DateTime, default=datetime.now),
-                Column(
-                    "updated_at", DateTime, default=datetime.now, onupdate=datetime.now
-                ),
-            )
+        return name_to_id
 
-            # 創建表（如果不存在）
-            self.metadata.create_all(self.engine)
-            # logger.info("✅ 資料表建立/檢查完成")
-        except Exception as e:
-            logger.error("❌ 建立資料表失敗: %s", e)
+    def insert_jobs(self, jobs: list[dict]):
+        if self.engine is None or not hasattr(self, "jobs_table"):
+            logger.error("❌ 資料庫連接或資料表未初始化")
+            return 0
 
-    def insert_jobs(self, jobs):
-        if self.engine is None:
-            logger.error("❌ 資料庫連接未初始化")
-            return False
+        if not jobs:
+            return 0
 
+        # 1. 準備資料
         df = pd.DataFrame(jobs)
-        
-        # 將這些可能有缺值的整數欄轉成 nullable Int64 dtype
+        # 儲存關聯資料，以 job_url 作為主鍵
+        relations_map = df.set_index("job_url")[["skills", "categories"]].to_dict(
+            "index"
+        )
+        # 取得所有唯一的技能與分類名稱
+        all_skills = set(
+            skill for sublist in df["skills"] for skill in sublist if skill
+        )
+        all_categories = set(
+            category for sublist in df["categories"] for category in sublist if category
+        )
+        # 移除關聯欄位，準備主表插入
+        jobs_df = df.drop(columns=["skills", "categories"])
+
+        # 處理可能的空值與型別
         nullable_int_cols = ["salary_min", "salary_max", "experience_min"]
         for col in nullable_int_cols:
-            if col in df.columns:
-                df[col] = df[col].astype("Int64")
+            if col in jobs_df.columns:
+                jobs_df[col] = pd.to_numeric(jobs_df[col], errors="coerce").astype(
+                    "Int64"
+                )
+        jobs_df = jobs_df.where(pd.notnull(jobs_df), None)
 
-        # 將 NaN 轉成 None（更保險）
-        df = df.where(pd.notnull(df), None)
+        update_dict = {
+            col.name: col
+            for col in self.jobs_table.c
+            if col.name not in ["id", "created_at", "job_url"]
+        }
+        update_dict["updated_at"] = datetime.now()
 
-        success_count = 0
-        insert_count = 0
-        update_count = 0
-
-        for _, row in df.iterrows():
+        # 2. 批次新增/更新 `jobs` 表
+        with self.engine.begin() as conn:
             try:
-                # 準備數據，排除 id 和 created_at
-                job_data = row.to_dict()
-                if "id" in job_data:
-                    del job_data["id"]
-                if "created_at" in job_data:
-                    del job_data["created_at"]
+                insert_stmt = insert(self.jobs_table).values(
+                    jobs_df.to_dict(orient="records")
+                )
+                upsert_stmt = insert_stmt.on_duplicate_key_update(update_dict)
+                result = conn.execute(upsert_stmt)
+                logger.info(f"批次新增/更新 {result.rowcount} 筆職缺資料到 `jobs` 表。")
 
-                # 使用 SQLAlchemy 的 insert 語句建立插入語法
-                insert_stmt = insert(self.jobs_table).values(**job_data)
+                # 3. 批次取得或建立 `skills` 和 `categories`
+                skill_name_to_id = self._get_or_create_items(
+                    conn, all_skills, self.skills_table
+                )
+                category_name_to_id = self._get_or_create_items(
+                    conn, all_categories, self.categories_table
+                )
 
-                # 建立更新語句，使用 job_url 作為唯一鍵
-                update_dict = {}
-                for col in self.jobs_table.columns:
-                    if col.name not in ["id", "created_at"]:
-                        update_dict[col.name] = getattr(insert_stmt.inserted, col.name)
+                # 4. 取得所有相關職缺的 ID
+                job_urls = list(relations_map.keys())
+                jobs_query = select(
+                    self.jobs_table.c.id, self.jobs_table.c.job_url
+                ).where(self.jobs_table.c.job_url.in_(job_urls))
+                job_url_to_id = {
+                    row.job_url: row.id for row in conn.execute(jobs_query)
+                }
+                job_ids = list(job_url_to_id.values())
 
-                # 手動設置 updated_at
-                update_dict["updated_at"] = datetime.now()
+                # 5. 更新關聯表
+                if job_ids:
+                    # 5a. 清除舊的關聯，確保更新時資料正確
+                    conn.execute(
+                        delete(self.jobs_skills_table).where(
+                            self.jobs_skills_table.c.job_id.in_(job_ids)
+                        )
+                    )
+                    conn.execute(
+                        delete(self.jobs_categories_table).where(
+                            self.jobs_categories_table.c.job_id.in_(job_ids)
+                        )
+                    )
 
-                # 加上 on_duplicate_key_update 的邏輯
-                update_stmt = insert_stmt.on_duplicate_key_update(**update_dict)
+                    # 5b. 準備並批次插入新的關聯
+                    new_job_skills = []
+                    new_job_categories = []
+                    for url, job_id in job_url_to_id.items():
+                        job_relations = relations_map[url]
+                        for skill_name in job_relations.get("skills", []):
+                            if skill_id := skill_name_to_id.get(skill_name):
+                                new_job_skills.append(
+                                    {"job_id": job_id, "skill_id": skill_id}
+                                )
+                        for cat_name in job_relations.get("categories", []):
+                            if cat_id := category_name_to_id.get(cat_name):
+                                new_job_categories.append(
+                                    {"job_id": job_id, "category_id": cat_id}
+                                )
 
-                # 執行 SQL 語句，寫入資料庫
-                with self.engine.begin() as conn:
-                    result = conn.execute(update_stmt)
+                    if new_job_skills:
+                        conn.execute(
+                            insert(self.jobs_skills_table).values(new_job_skills)
+                        )
+                    if new_job_categories:
+                        conn.execute(
+                            insert(self.jobs_categories_table).values(
+                                new_job_categories
+                            )
+                        )
 
-                    # 判斷是插入還是更新
-                    if result.rowcount == 1:
-                        insert_count += 1
-                        # print(f"✅ 新增職位: {job_data.get('job_title', 'Unknown')}")
-                    else:
-                        update_count += 1
-                        # print(f"🔄 更新職位: {job_data.get('job_title', 'Unknown')}")
-
-                success_count += 1
+                    logger.info(f"✅ 成功更新 {len(job_ids)} 筆職缺的技能與分類關聯。")
 
             except Exception as e:
-                logger.error("❌ 處理職位資料失敗: %s", e)
-                logger.error("   職位標題: %s", row.get("job_title", "Unknown"))
-                logger.error("   job_url: %s", row.get("job_url", "Unknown"))
-                continue
+                logger.error("❌ 寫入資料庫時發生錯誤: %s", e)
+                # 由於 `with self.engine.begin() as conn:`，發生錯誤時會自動回滾
+                return 0
 
-        logger.info("✅ 寫入資料庫完成:")
-        logger.info("   總計: %s 筆", len(df))
-        logger.info("   成功: %s 筆", success_count)
-        logger.info("   新增: %s 筆", insert_count)
-        logger.info("   更新: %s 筆", update_count)
-        logger.info("   失敗: %s 筆", len(df) - success_count)
-
-        return success_count
+        return len(jobs_df)
