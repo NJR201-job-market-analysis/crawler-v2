@@ -1,10 +1,9 @@
 import urllib.request as req
 import bs4 as bs
-import re
 import ssl
 import json
 from shared.logger import logger
-from ..constants import COMMON_SKILLS
+from ..constants import COMMON_SKILLS, job_category_mapping
 from ..utils import extract_salary_range, extract_experience_min
 
 # https://www.1111.com.tw/api/v1/search/jobs/?page=1&fromOffset=2&jobPositions=140600"
@@ -18,7 +17,7 @@ HEADERS = {
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def analaze_pages(url):
+def get_job_detail(url):
     try:
         r = req.Request(
             url,
@@ -103,7 +102,10 @@ def analaze_pages(url):
                 job_description = content.ul.get_text(strip=True) if content.ul else ""
             if content.h3.text == "職務類別":
                 for category in content.select("ul li p"):
-                    categories.append(category.text)
+                    if category.text in job_category_mapping:
+                        categories.append(job_category_mapping[category.text])
+                    else:
+                        logger.info(f"未對應的 1111 職務類別: {category.text}")
 
     # 日薪 3,500元~4,500元
     # 日薪 2,500元以上
@@ -142,7 +144,7 @@ def analaze_pages(url):
         "district": district,
         "location": location,
         "update_time": updata_time,
-        "skills": skills,
+        "skills": list(skills),
         "categories": categories,
     }
     return data
@@ -158,23 +160,22 @@ def crawl_1111_jobs_by_category(category):
     logger.info("🐛 開始爬取 1111 職缺 | %s | %s", category_id, category_name)
 
     while True:
-        json = fetch_job_list(category_id, page)
-        if json is None:
+        job_list_res = fetch_job_list(category_id, page)
+        if job_list_res is None:
             logger.info("請求 category:%s, page:%s 失敗", category_name, page)
             break
 
-        total_page = json["result"]["pagination"]["totalPage"]
+        total_page = job_list_res["result"]["pagination"]["totalPage"]
 
-        for job in json["result"]["hits"]:
+        for job in job_list_res["result"]["hits"]:
             job_id = job["jobId"]
             job_title = job["title"]
-            # job_location = job["workCity"]["name"]
             company_name = job["companyName"]
 
             logger.info("🔍 [1111] | %s | %s | %s", company_name, job_title, job_id)
 
             job_url = f"https://www.1111.com.tw/job/{job_id}"
-            job_detail = analaze_pages(job_url)
+            job_detail = get_job_detail(job_url)
 
             if job_detail is None:
                 logger.info("❌ [1111] | %s | %s", company_name, job_title)
@@ -272,4 +273,3 @@ def _extract_job_skills_from_additional_field(soup):
     except Exception as e:
         logger.error("解析附加條件失敗 | %s", e)
         return ""
-

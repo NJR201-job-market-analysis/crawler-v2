@@ -65,12 +65,17 @@ def crawl_104_jobs_by_category(category):
             company_name = job["header"]["custName"]
             job_title = job["header"]["jobName"]
             job_description = job_detail["jobDescription"]
+
             skills = extract_skills(job_description)
             raw_skills = ",".join(sorted(skills)) if skills else ""
-            categories = [
-                job_category_mapping[category["description"]]
-                for category in job_detail["jobCategory"]
-            ]
+
+            categories = []
+            for category in job_detail["jobCategory"]:
+                job_category_desc = category["description"]
+                if job_category_desc in job_category_mapping:
+                    categories.append(job_category_mapping[job_category_desc])
+                else:
+                    logger.info(f"未對應的 104 職務類別: {job_category_desc}")
 
             city = job_detail["addressArea"]
             district = job_detail["addressRegion"].replace(city, "")

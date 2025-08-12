@@ -4,7 +4,6 @@ from sqlalchemy import create_engine  # 建立資料庫連線的工具（SQLAlch
 from sqlalchemy import (
     MetaData,
     select,
-    Table,
     delete,
 )
 from sqlalchemy.dialects.mysql import (
@@ -94,10 +93,8 @@ class Database:
                 logger.error("❌ 自動創建資料庫失敗: %s", create_error)
                 return None
 
-    def _get_or_create_items(
-        self, conn, names: set[str], table: Table
-    ) -> dict[str, int]:
-        name_to_id: dict[str, int] = {}
+    def _get_or_create_items(self, conn, names, table):
+        name_to_id = {}
         if not names:
             return name_to_id
 
@@ -128,7 +125,7 @@ class Database:
 
         return name_to_id
 
-    def insert_jobs(self, jobs: list[dict]):
+    def insert_jobs(self, jobs):
         if self.engine is None or not hasattr(self, "jobs_table"):
             logger.error("❌ 資料庫連接或資料表未初始化")
             return 0

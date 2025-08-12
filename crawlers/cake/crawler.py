@@ -121,7 +121,7 @@ def crawl_cake_jobs_by_category(category):
                 "location": location,
                 "job_url": job_url,
                 "platform": "Cake",
-                "skills": skills,
+                "skills": list(skills),
                 "categories": categories,
             }
             result.append(data)
@@ -169,11 +169,11 @@ def _extract_job_description(job_detail_html):
         all_text = []
 
         for job_description in job_description_list:
-            text_content = " ".join(job_description.stripped_strings)
+            text_content = job_description.get_text(separator="\n", strip=True)
             if text_content:
                 all_text.append(text_content)
 
-        return " ".join(all_text)
+        return "\n".join(all_text)
     except Exception as e:
         logger.error("Failed to parse job description: %s", e)
         return ""

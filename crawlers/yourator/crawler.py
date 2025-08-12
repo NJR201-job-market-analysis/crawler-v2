@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 from urllib.parse import quote
-
+from shared.logger import logger
 from .constants import job_salary_type_dict
 from ..constants import (
     COMMON_SKILLS,
@@ -57,10 +57,10 @@ def extract_job_experience(soup):
 
 
 def extract_job_description(soup):
-    content = soup.select("div.job__content")
-    for s in content.find_all("section"):
-        s.decompose()
-    return content.get_text(strip=True)
+    content = soup.select_one("div.job__content")
+    if content:
+        return content.get_text(strip=True, separator="\n")
+    return ""
 
 
 # 取得職缺詳細資訊的技能
@@ -88,7 +88,10 @@ def crawl_yourator_jobs_by_category(category):
 
         for job in job_list_res["payload"]["jobs"]:
             job_url = BASE_URL + job["path"]
-            print(f"Processing: {job_url}")
+            job_title = job["name"]
+            company_name = job["company"]["brand"]
+
+            logger.info("🔍 [Yourator] | %s | %s", company_name, job_title)
 
             html = fetch_job_html(job_url)
             soup = BeautifulSoup(html, "html.parser")
@@ -107,7 +110,7 @@ def crawl_yourator_jobs_by_category(category):
             salary_text = job["salary"]
             salary_min, salary_max = extract_salary_range(salary_text)
             salary_type = ""
-            if "Negotiable" in salary_text:
+            if any(keyword in salary_text for keyword in ["Negotiable", "面議"]):
                 salary_min = 40000
                 salary_max = None
                 salary_type = "面議"
@@ -124,8 +127,8 @@ def crawl_yourator_jobs_by_category(category):
 
             results.append(
                 {
-                    "job_title": job["name"],
-                    "company_name": job["company"]["brand"],
+                    "job_title": job_title,
+                    "company_name": company_name,
                     "work_type": work_type,
                     "required_skills": raw_skills,
                     "job_description": job_description,
@@ -140,7 +143,7 @@ def crawl_yourator_jobs_by_category(category):
                     "district": district,
                     "location": location,
                     "platform": "Yourator",
-                    "skills": skills,
+                    "skills": list(skills),
                     "categories": categories,
                 }
             )
