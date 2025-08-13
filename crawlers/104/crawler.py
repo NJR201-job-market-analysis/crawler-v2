@@ -124,7 +124,7 @@ def crawl_104_jobs_by_category(category):
                 "location": location,
                 "job_url": job_url,
                 "platform": "104",
-                "categories": categories,
+                "categories": list(set(categories)),
                 "skills": skills,
             }
             result.append(data)

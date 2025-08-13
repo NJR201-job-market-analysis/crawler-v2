@@ -145,7 +145,7 @@ def get_job_detail(url):
         "location": location,
         "update_time": updata_time,
         "skills": list(skills),
-        "categories": categories,
+        "categories": list(set(categories)),
     }
     return data
 
