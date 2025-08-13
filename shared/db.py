@@ -135,6 +135,8 @@ class Database:
 
         # 1. 準備資料
         df = pd.DataFrame(jobs)
+        # 移除重複的職缺，以 job_url 為依據，保留最後一筆
+        df = df.drop_duplicates(subset=["job_url"], keep="last")
         # 儲存關聯資料，以 job_url 作為主鍵
         relations_map = df.set_index("job_url")[["skills", "categories"]].to_dict(
             "index"
