@@ -150,19 +150,48 @@ def get_job_detail(url):
     return data
 
 
-def crawl_1111_jobs_by_category(category):
-    result = []
-    page = 1
+def crawl_1111_jobs_by_keyword(keyword):
+    logger.info("🐛 開始爬取 1111 職缺 | %s", keyword)
 
+    result = crawl_1111_jobs(f"{BASE_URL}?sort=desc&keyword={keyword}")
+
+    logger.info("🔍 [1111] | %s | 總共爬取了 %s 個職缺", keyword, len(result))
+
+    return result
+
+
+def crawl_1111_jobs_by_category(category):
     category_id = category["id"]
     category_name = category["name"]
 
     logger.info("🐛 開始爬取 1111 職缺 | %s | %s", category_id, category_name)
+    result = crawl_1111_jobs(f"{BASE_URL}?sort=desc&jobPositions={category_id}")
+
+    logger.info("🔍 [1111] | %s | 總共爬取了 %s 個職缺", category_name, len(result))
+
+    return result
+
+
+def safe_parse_json(res):
+    try:
+        data = res.read()
+        json_str = data.decode("utf-8")
+        json_data = json.loads(json_str)
+        return json_data
+    except Exception as e:
+        logger.error("解析 JSON 失敗 | %s", e)
+        return None
+
+
+def crawl_1111_jobs(url):
+    result = []
+    page = 1
 
     while True:
-        job_list_res = fetch_job_list(category_id, page)
+        request_url = f"{url}&page={page}"
+        job_list_res = fetch_job_list(request_url)
         if job_list_res is None:
-            logger.info("請求 category:%s, page:%s 失敗", category_name, page)
+            logger.info("請求 %s 失敗", url)
             break
 
         total_page = job_list_res["result"]["pagination"]["totalPage"]
@@ -208,31 +237,17 @@ def crawl_1111_jobs_by_category(category):
         if page > total_page:
             break
 
-    logger.info("🔍 [1111] | %s | 總共爬取了 %s 個職缺", category_name, len(result))
-
     return result
 
 
-def safe_parse_json(res):
+def fetch_job_list(url):
     try:
-        data = res.read()
-        json_str = data.decode("utf-8")
-        json_data = json.loads(json_str)
-        return json_data
-    except Exception as e:
-        logger.error("解析 JSON 失敗 | %s", e)
-        return None
-
-
-def fetch_job_list(category_id, page):
-    try:
-        request_url = f"{BASE_URL}?page={page}&sort=desc&jobPositions={category_id}"
-        r = req.Request(request_url)
+        r = req.Request(url)
         r.add_header("User-Agent", HEADERS["User-Agent"])
         res = req.urlopen(r)
         return safe_parse_json(res)
     except Exception as e:
-        logger.error("請求 %s 失敗 | %s", request_url, e)
+        logger.error("請求 %s 失敗 | %s", url, e)
         return None
 
 
