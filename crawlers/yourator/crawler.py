@@ -96,7 +96,8 @@ def crawl_yourator_jobs_by_category(category):
             html = fetch_job_html(job_url)
             soup = BeautifulSoup(html, "html.parser")
 
-            work_type = soup.select_one(".basic-info__job_type").get_text(strip=True)
+            work_type_el = soup.select_one(".basic-info__job_type")
+            work_type = work_type_el.get_text(strip=True) if work_type_el else "正職"
             job_description = extract_job_description(soup)
 
             skills = extract_job_skills(soup)
