@@ -35,26 +35,6 @@ def get_job_detail(url):
     job_description_element = html.find("div", {"class": "whitespace-pre-line"})
     job_description = job_description_element.text if job_description_element else ""
 
-    # 地址的標頭和"class"有兩種...#爬出來的地址會參雜一堆空格和換行, 這裡先設一個空list,
-    # 再用for in回圈寫入有意義的文字(空格和換行符號不寫入)
-    work_place = html.find("p", {"class": "mb-4"})  # 第一種路徑
-    if work_place == None:  # 如果第一種路徑抓不到
-        work_place = html.find(
-            "div", {"class": "md:items-center content"}
-        ).p.text  # 就它了
-        work_place_location = ""
-        for w in work_place:
-            if w == " " or w == "\n":
-                continue
-        else:
-            work_place_location = work_place_location + w
-    else:
-        work_place_location = ""
-        for s in work_place.text:
-            if s == " " or s == "\n":
-                continue  # 不寫入空格" "和換行符號"\n" 遇到就回前面, 不執行append(a)
-            work_place_location = work_place_location + s
-
     contents = html.find_all("div", {"class": "content"})
 
     work_type = "全職"
