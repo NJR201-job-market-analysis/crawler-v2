@@ -4,6 +4,7 @@ import re
 import time
 import random
 import ssl
+from datetime import datetime
 from shared.logger import logger
 from .constants import job_type_dict, salary_type_dict
 from ..constants import COMMON_SKILLS, job_category_mapping
@@ -126,6 +127,8 @@ def crawl_104_jobs_by_category(category):
                 "platform": "104",
                 "categories": list(set(categories)),
                 "skills": skills,
+                "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
             result.append(data)
 

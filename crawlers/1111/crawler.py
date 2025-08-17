@@ -2,6 +2,7 @@ import urllib.request as req
 import bs4 as bs
 import ssl
 import json
+from datetime import datetime
 from shared.logger import logger
 from ..constants import COMMON_SKILLS, job_category_mapping
 from ..utils import extract_salary_range, extract_experience_min
@@ -105,9 +106,6 @@ def get_job_detail(url):
 
     experience_min = extract_experience_min(experience_text)
 
-    # 更新時間
-    updata_time = html.find("span", {"class": "leading-[1.8] text-[16px]"}).text
-
     raw_skills = ",".join(sorted(skills)) if skills else ""
 
     data = {
@@ -123,7 +121,6 @@ def get_job_detail(url):
         "city": city,
         "district": district,
         "location": location,
-        "update_time": updata_time,
         "skills": list(skills),
         "categories": list(set(categories)),
     }
@@ -209,6 +206,8 @@ def crawl_1111_jobs(url):
                 "platform": "1111",
                 "skills": job_detail["skills"],
                 "categories": job_detail["categories"],
+                "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             }
             result.append(data)
 

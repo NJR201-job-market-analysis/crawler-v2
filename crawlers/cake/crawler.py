@@ -1,5 +1,6 @@
 import urllib.request as req
 import json
+from datetime import datetime
 from typing import cast, List
 from bs4 import BeautifulSoup, Tag
 from shared.logger import logger
@@ -123,6 +124,8 @@ def crawl_cake_jobs_by_category(category):
                 "platform": "Cake",
                 "skills": list(skills),
                 "categories": categories,
+                "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             }
             result.append(data)
 
