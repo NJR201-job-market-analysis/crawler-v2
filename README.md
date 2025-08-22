@@ -1,44 +1,56 @@
-# crawler
+本地開發
 
-本專案為多網站職缺爬蟲程式集合，支援 104 人力銀行、1111 人力銀行、Cake.me、Yourator 及 LinkedIn 等平台的職缺資料擷取與分析。
+可以不透過 docker 省去反覆構建的麻煩，快速測試程式碼邏輯 (要確保在執行前，RabbitMQ、MySQL等服務都已經成功打開。)
 
-## 專案結構
+建立虛擬環境
+```bash
+pipenv --python ~/.pyenv/versions/3.8.10/bin/python
+```
 
-- `104/`
-  - `104人力銀行_crawl.ipynb`：104 人力銀行職缺爬蟲與資料分析 Notebook
+安裝依賴包
+```bash
+pipenv install
+pipenv install -e .
+```
 
-- `1111/`
-  - `新專題main.py`、`新專案main2.py`：1111 人力銀行職缺爬蟲主程式
+產生 .env
+```bash
+ENV=DOCKER python3 genenv.py
+```
 
-- `cake/`  
-  - `cake_crawler.py`：Cake.me 職缺爬蟲主程式  
-  - `main.py`：Cake.me 爬蟲執行入口  
-  - `cake_me_crawl_20250523.ipynb`：Cake.me 職缺資料分析與爬取範例 Notebook
+啟動 worker
+```bash
+pipenv run celery -A crawlers.worker worker --loglevel=info --hostname=%h -Q jobmarket-worker-1
+```
 
-- `yourator/`  
-  - `yourator_crawler.py`：Yourator 職缺爬蟲主程式  
-  - `main.py`：Yourator 爬蟲執行入口
+啟動 producer 爬取資料
+```bash
+pipenv run python -m crawlers.cake.producer
+```
 
-- `linkedin/`
-  - `linkedin.py`：LinkedIn 職缺爬蟲主程式
-  - `Linkedin_crawl_20250527.ipynb`：LinkedIn 職缺爬蟲與資料分析 Notebook
+確認執行結果：
+1. 訪問 `localhost:8080` 查看數據有沒有正確寫入
+2. 查看 worker 日誌 `docker logs jobmarket-worker-1`，看看有沒有報錯
 
-## 使用方式
+---------------------------------------------------------------------
 
-1. 進入對應資料夾（如 `104/`、`1111/`、`cake/`、`yourator/` 或 `linkedin/`）。
-2. 執行 `main.py`、相關 Python 檔案或 Notebook 以開始爬取職缺資料，結果將輸出為 CSV 檔案。
-3. 亦可參考 Notebook 進行進階資料分析。
+shared 是共用的模組
 
-## 依賴套件
+- logger 可以寫入日誌，並存放在 logs 資料夾下
+- db 用來將職缺資料寫入資料庫
 
-- requests
-- beautifulsoup4
-- pandas
-- tqdm（主要用於 Notebook）
-- selenium（LinkedIn 爬蟲需要）
+可參考 crawlers/cake/tasks 的寫法。
 
-請先安裝相關 Python 套件。
+---------------------------------------------------------------------
 
-## 版權
+構建容器
 
-僅供學術與技術交流使用，請勿用於商業用途。
+構建指令
+```bash
+docker build -f Dockerfile -t xxx/jobmarket-crawler:0.0.1 .
+```
+
+推送到 Docker Hub
+```bash
+docker push your_username/jobmarket-crawler:0.0.1
+```
