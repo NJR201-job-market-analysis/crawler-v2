@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8fca27966127010f3337df3b5f00260c83f162ed5b9af2b9677ddb88e8ef3a4f"
+            "sha256": "e4abaa8fb553464f982d1f455aac71f9d6aa0f9827ccb14e4f1412be6d42b17b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -228,7 +228,7 @@
         },
         "crawler": {
             "editable": true,
-            "path": "."
+            "file": "."
         },
         "flask": {
             "hashes": [
